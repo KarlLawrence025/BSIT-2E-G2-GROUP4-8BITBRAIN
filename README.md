@@ -1,1 +1,3 @@
-# BSIT-2E-G2-GROUP4-8BITBRAIN
+# WizDom-Quiz-Website
+
+A project made by me for Web-Dev Practice and to help our final project in WST in case something happens.
