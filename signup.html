@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>8BitBrain - Sign Up</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="imgs/Sans_Favi.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bitcount+Single:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="header">
+      <a href="index.html" class="logo"
+        >8BitBrain
+        <img src="imgs/Sans_Favi.png" alt="logo" class="logoimg" />
+      </a>
+
+      <nav class="navbar">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="modes.html">Game Modes</a>
+        <a href="contacts.html">Contact</a>
+        <a href="leaderboards.html">Leaderboards</a>
+        <a href="login.html"><button class="btn-login">Login</button></a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="login-section">
+        <div class="login-container signup-container">
+          <h1>Create Your Account</h1>
+          <p class="login-subtitle">Join the 8BitBrain community today!</p>
+
+          <div class="account-type-selector">
+            <button class="account-type-btn active" data-type="user">
+              Regular User
+            </button>
+            <button class="account-type-btn" data-type="admin">
+              Admin
+            </button>
+          </div>
+
+          <form id="signupForm" class="login-form">
+            <div class="form-group">
+              <label for="fullname">Full Name</label>
+              <input
+                type="text"
+                id="fullname"
+                name="fullname"
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Choose a username"
+                required
+                minlength="3"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="age">Age</label>
+              <input
+                type="number"
+                id="age"
+                name="age"
+                placeholder="Enter your age"
+                min="1"
+                max="120"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Create a password (min 6 characters)"
+                required
+                minlength="6"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="confirm-password">Confirm Password</label>
+              <input
+                type="password"
+                id="confirm-password"
+                name="confirm-password"
+                placeholder="Re-enter your password"
+                required
+              />
+            </div>
+
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="terms" name="terms" required />
+              <label for="terms">I agree to the <a href="#" class="terms-link">Terms & Conditions</a></label>
+            </div>
+
+            <button type="submit" class="btn-submit">
+              Create Account
+            </button>
+          </form>
+
+          <div class="login-footer">
+            <p>Already have an account? <a href="login.html" class="signup-link">Login here</a></p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
