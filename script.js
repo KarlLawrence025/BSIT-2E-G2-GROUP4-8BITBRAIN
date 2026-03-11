@@ -133,10 +133,11 @@ if (document.getElementById("loginForm")) {
 
     if (currentAccountType === "admin") {
       alert(`Admin Login Successful!\nWelcome, ${formData.name}!`);
+      window.location.href = "dashboard-admin.html";
 
     } else {
       alert(`User Login Successful!\nWelcome, ${formData.name}!`);
-      window.location.href = "modes.html";
+      window.location.href = "dashboard-user.html";
     }
 
     if (formData.remember) {
@@ -317,4 +318,25 @@ if (document.getElementById("loginForm")) {
       "Terms & Conditions:\n\n1. You must be at least 13 years old to use this service.\n2. Provide accurate information during registration.\n3. Keep your password secure.\n4. No cheating or exploiting game mechanics.\n5. Be respectful to other players.\n\nFull terms coming soon!"
     );
   });
+}
+
+let index = 0;
+
+const slides = document.querySelector(".slides");
+const totalSlides = document.querySelectorAll(".slide").length;
+
+document.querySelector(".next").onclick = () => {
+  index++;
+  if(index >= totalSlides) index = 0;
+  updateSlide();
+}
+
+document.querySelector(".prev").onclick = () => {
+  index--;
+  if(index < 0) index = totalSlides - 1;
+  updateSlide();
+}
+
+function updateSlide(){
+  slides.style.transform = `translateX(-${index * 100}%)`;
 }
