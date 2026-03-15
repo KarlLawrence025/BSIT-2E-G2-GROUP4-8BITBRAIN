@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feedback - 8BitBrain</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="logo">
+          <span class="skull">💀</span>
+          <span class="logo-text">8BitBrain</span>
+        </div>
+        <ul class="nav-menu">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="modes.html">Game Modes</a></li>
+          <li><a href="contacts.html">Contact</a></li>
+          <li><a href="leaderboards.html">Leaderboards</a></li>
+          <li><a href="feedback.html" class="active">Feedback</a></li>
+        </ul>
+        <div class="nav-buttons">
+          <a href="login.html" class="btn-login">Login</a>
+          <a href="signup.html" class="btn-signup">Sign Up</a>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <section class="feedback-section">
+        <div class="container">
+          <div class="feedback-header">
+            <h1>📝 Submit Feedback</h1>
+            <p>Help us improve 8BitBrain! Share your thoughts, suggestions, or report issues.</p>
+          </div>
+
+          <div class="feedback-container">
+            <form id="feedback-form" class="feedback-form">
+              <div class="form-group">
+                <label for="feedback-name">Your Name</label>
+                <input
+                  type="text"
+                  id="feedback-name"
+                  required
+                  placeholder="Enter your name"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="feedback-email">Email Address</label>
+                <input
+                  type="email"
+                  id="feedback-email"
+                  required
+                  placeholder="your.email@example.com"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="feedback-type">Feedback Type</label>
+                <select id="feedback-type" required>
+                  <option value="">Select Type</option>
+                  <option value="suggestion">💡 Suggestion</option>
+                  <option value="bug">🐛 Bug Report</option>
+                  <option value="feature">✨ Feature Request</option>
+                  <option value="general">💬 General Feedback</option>
+                  <option value="complaint">⚠️ Complaint</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="feedback-rating">Overall Rating (Optional)</label>
+                <div class="rating-container">
+                  <input type="radio" name="rating" id="star5" value="5" />
+                  <label for="star5" class="star">⭐</label>
+                  <input type="radio" name="rating" id="star4" value="4" />
+                  <label for="star4" class="star">⭐</label>
+                  <input type="radio" name="rating" id="star3" value="3" />
+                  <label for="star3" class="star">⭐</label>
+                  <input type="radio" name="rating" id="star2" value="2" />
+                  <label for="star2" class="star">⭐</label>
+                  <input type="radio" name="rating" id="star1" value="1" />
+                  <label for="star1" class="star">⭐</label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="feedback-message">Your Feedback</label>
+                <textarea
+                  id="feedback-message"
+                  rows="8"
+                  required
+                  placeholder="Tell us what's on your mind..."
+                ></textarea>
+              </div>
+
+              <button type="submit" class="btn-submit">
+                Submit Feedback
+              </button>
+            </form>
+
+            <div class="feedback-info">
+              <h3>🎯 What happens next?</h3>
+              <ul>
+                <li>✅ We review all feedback within 24-48 hours</li>
+                <li>📧 You'll receive a confirmation email</li>
+                <li>🚀 Suggestions are considered for future updates</li>
+                <li>🐛 Bug reports are prioritized and fixed ASAP</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+      // Feedback form handler
+      if (document.getElementById('feedback-form')) {
+        const feedbackForm = document.getElementById('feedback-form');
+        
+        feedbackForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          // Get rating
+          const ratingInputs = document.querySelectorAll('input[name="rating"]');
+          let rating = null;
+          ratingInputs.forEach(input => {
+            if (input.checked) rating = parseInt(input.value);
+          });
+
+          // Prepare feedback data
+          const feedbackData = {
+            name: document.getElementById('feedback-name').value,
+            email: document.getElementById('feedback-email').value,
+            feedback_type: document.getElementById('feedback-type').value,
+            rating: rating,
+            message: document.getElementById('feedback-message').value,
+            user_id: null // Not logged in, set to null
+          };
+
+          try {
+            const response = await fetch('api/submit_feedback.php', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(feedbackData)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+              alert('✅ Thank you for your feedback!\n\nWe appreciate your input and will review it soon.\n\nYou should receive a confirmation email shortly.');
+              feedbackForm.reset();
+            } else {
+              alert('❌ Error submitting feedback: ' + result.message);
+            }
+          } catch (error) {
+            console.error('Feedback error:', error);
+            alert('Network error. Please make sure XAMPP Apache is running and try again.');
+          }
+        });
+
+        // Star rating hover effect
+        const stars = document.querySelectorAll('.star');
+        stars.forEach((star, index) => {
+          star.addEventListener('mouseenter', () => {
+            stars.forEach((s, i) => {
+              if (i >= index) {
+                s.style.color = '#fbbf24';
+              } else {
+                s.style.color = '#4b5563';
+              }
+            });
+          });
+        });
+
+        const ratingContainer = document.querySelector('.rating-container');
+        ratingContainer.addEventListener('mouseleave', () => {
+          const checked = document.querySelector('input[name="rating"]:checked');
+          stars.forEach((s, i) => {
+            if (checked && i >= Array.from(stars).indexOf(checked.previousElementSibling)) {
+              s.style.color = '#fbbf24';
+            } else {
+              s.style.color = '#4b5563';
+            }
+          });
+        });
+      }
+    </script>
+  </body>
+</html>

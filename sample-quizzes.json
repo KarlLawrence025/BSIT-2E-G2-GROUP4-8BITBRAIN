@@ -1,0 +1,155 @@
+[
+    {
+        "title": "Python Fundamentals",
+        "category": "Programming",
+        "difficulty": "easy",
+        "questions": [
+            {
+                "text": "What is Python?",
+                "options": [
+                    {
+                        "text": "A programming language",
+                        "index": 0
+                    },
+                    {
+                        "text": "A snake species",
+                        "index": 1
+                    },
+                    {
+                        "text": "A web browser",
+                        "index": 2
+                    },
+                    {
+                        "text": "A music library",
+                        "index": 3
+                    }
+                ],
+                "correctAnswer": 0
+            },
+            {
+                "text": "Which keyword creates a function in Python?",
+                "options": [
+                    {
+                        "text": "function",
+                        "index": 0
+                    },
+                    {
+                        "text": "def",
+                        "index": 1
+                    },
+                    {
+                        "text": "func",
+                        "index": 2
+                    },
+                    {
+                        "text": "define",
+                        "index": 3
+                    }
+                ],
+                "correctAnswer": 1
+            }
+        ]
+    },
+    {
+        "title": "Web Development Basics",
+        "category": "Web",
+        "difficulty": "easy",
+        "questions": [
+            {
+                "text": "What does HTML stand for?",
+                "options": [
+                    {
+                        "text": "Hyper Text Markup Language",
+                        "index": 0
+                    },
+                    {
+                        "text": "High Tech Modern Language",
+                        "index": 1
+                    },
+                    {
+                        "text": "Home Tool Markup Language",
+                        "index": 2
+                    },
+                    {
+                        "text": "Hyperlinks and Text Markup Language",
+                        "index": 3
+                    }
+                ],
+                "correctAnswer": 0
+            },
+            {
+                "text": "What is CSS used for?",
+                "options": [
+                    {
+                        "text": "Creating databases",
+                        "index": 0
+                    },
+                    {
+                        "text": "Styling web pages",
+                        "index": 1
+                    },
+                    {
+                        "text": "Server-side scripting",
+                        "index": 2
+                    },
+                    {
+                        "text": "Mobile app development",
+                        "index": 3
+                    }
+                ],
+                "correctAnswer": 1
+            }
+        ]
+    },
+    {
+        "title": "Advanced JavaScript",
+        "category": "Programming",
+        "difficulty": "hard",
+        "questions": [
+            {
+                "text": "What is closure in JavaScript?",
+                "options": [
+                    {
+                        "text": "A way to end a program",
+                        "index": 0
+                    },
+                    {
+                        "text": "A function that has access to another function's scope",
+                        "index": 1
+                    },
+                    {
+                        "text": "A type of loop",
+                        "index": 2
+                    },
+                    {
+                        "text": "A CSS property",
+                        "index": 3
+                    }
+                ],
+                "correctAnswer": 1
+            },
+            {
+                "text": "What is the purpose of async/await?",
+                "options": [
+                    {
+                        "text": "To delay code execution",
+                        "index": 0
+                    },
+                    {
+                        "text": "To handle asynchronous operations",
+                        "index": 1
+                    },
+                    {
+                        "text": "To create animations",
+                        "index": 2
+                    },
+                    {
+                        "text": "To improve performance",
+                        "index": 3
+                    }
+                ],
+                "correctAnswer": 1
+            }
+        ]
+    }
+]

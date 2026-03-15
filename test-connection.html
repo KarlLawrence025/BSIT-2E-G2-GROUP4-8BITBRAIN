@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8BitBrain - Connection Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a0933;
+            color: #fff;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #ff2fb3;
+            text-align: center;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #ff2fb3;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #22c55e;
+            color: #000;
+        }
+        .error {
+            background: #ef4444;
+            color: #fff;
+        }
+        .warning {
+            background: #f59e0b;
+            color: #000;
+        }
+        .info {
+            background: #3b82f6;
+            color: #fff;
+        }
+        button {
+            background: linear-gradient(135deg, #ff2fb3, #a855f7);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            margin: 10px 5px;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        code {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #38bdf8;
+        }
+        .instruction {
+            background: rgba(56, 189, 248, 0.1);
+            border-left: 4px solid #38bdf8;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 8BitBrain Connection Diagnostic</h1>
+    
+    <div class="test-section">
+        <h2>📍 Current Location</h2>
+        <div id="location-info"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔌 Database Connection Test</h2>
+        <button onclick="testDatabaseConnection()">Test Database</button>
+        <div id="db-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>👥 User API Test</h2>
+        <button onclick="testUserAPI()">Test Get Users</button>
+        <div id="user-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 Quiz API Test</h2>
+        <button onclick="testQuizAPI()">Test Get Quizzes</button>
+        <div id="quiz-result"></div>
+    </div>
+
+    <div class="instruction">
+        <h3>✅ How to Fix "Network Error":</h3>
+        <ol>
+            <li><strong>Start XAMPP:</strong>
+                <ul>
+                    <li>Open XAMPP Control Panel</li>
+                    <li>Click "Start" on <strong>Apache</strong></li>
+                    <li>Click "Start" on <strong>MySQL</strong></li>
+                    <li>Wait for both to show "Running" (green)</li>
+                </ul>
+            </li>
+            <li><strong>Check File Location:</strong>
+                <ul>
+                    <li>All files must be in: <code>C:\xampp\htdocs\8bitbrain\</code></li>
+                    <li>Unzip the project folder there</li>
+                </ul>
+            </li>
+            <li><strong>Access via Localhost:</strong>
+                <ul>
+                    <li>❌ DO NOT open files by double-clicking</li>
+                    <li>✅ Access via browser: <code>http://localhost/8bitbrain/dashboard-admin.html</code></li>
+                </ul>
+            </li>
+            <li><strong>Check Port 80:</strong>
+                <ul>
+                    <li>If Apache won't start, port 80 might be used by Skype, IIS, or another program</li>
+                    <li>Close those programs and restart Apache</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <script>
+        // Display current location
+        const locationInfo = document.getElementById('location-info');
+        const currentURL = window.location.href;
+        const protocol = window.location.protocol;
+        
+        let locationHTML = `
+            <div class="test-result ${protocol === 'http:' ? 'success' : 'error'}">
+                Protocol: <strong>${protocol}</strong>
+            </div>
+            <div class="test-result info">
+                Full URL: <code>${currentURL}</code>
+            </div>
+        `;
+        
+        if (protocol === 'file:') {
+            locationHTML += `
+                <div class="test-result error">
+                    ❌ ERROR: You're opening files directly (file:// protocol)
+                </div>
+                <div class="test-result warning">
+                    ⚠️ You must access via: <code>http://localhost/8bitbrain/test-connection.html</code>
+                </div>
+            `;
+        } else if (protocol === 'http:') {
+            locationHTML += `
+                <div class="test-result success">
+                    ✅ GOOD: Using HTTP protocol
+                </div>
+            `;
+        }
+        
+        locationInfo.innerHTML = locationHTML;
+
+        // Test database connection
+        async function testDatabaseConnection() {
+            const resultDiv = document.getElementById('db-result');
+            resultDiv.innerHTML = '<div class="test-result info">🔄 Testing database connection...</div>';
+            
+            try {
+                const response = await fetch('db.php');
+                const text = await response.text();
+                
+                if (text.includes('success') || text.includes('Connected')) {
+                    resultDiv.innerHTML = `
+                        <div class="test-result success">✅ Database connection works!</div>
+                        <div class="test-result info">Response: ${text}</div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="test-result error">❌ Database connection failed</div>
+                        <div class="test-result warning">Response: ${text}</div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="test-result error">❌ Cannot reach db.php</div>
+                    <div class="test-result warning">Error: ${error.message}</div>
+                    <div class="test-result warning">Make sure Apache is running in XAMPP!</div>
+                `;
+            }
+        }
+
+        // Test User API
+        async function testUserAPI() {
+            const resultDiv = document.getElementById('user-result');
+            resultDiv.innerHTML = '<div class="test-result info">🔄 Testing User API...</div>';
+            
+            try {
+                const response = await fetch('api/get_users.php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="test-result success">✅ User API works!</div>
+                        <div class="test-result info">Found ${data.users.length} users</div>
+                        <div class="test-result info">Response: <code>${JSON.stringify(data, null, 2)}</code></div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="test-result error">❌ User API failed</div>
+                        <div class="test-result warning">${data.message}</div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="test-result error">❌ Cannot reach api/get_users.php</div>
+                    <div class="test-result warning">Error: ${error.message}</div>
+                    <div class="test-result warning">Check: Is Apache running? Are files in C:/xampp/htdocs/8bitbrain/?</div>
+                `;
+            }
+        }
+
+        // Test Quiz API
+        async function testQuizAPI() {
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.innerHTML = '<div class="test-result info">🔄 Testing Quiz API...</div>';
+            
+            try {
+                const response = await fetch('api/get_quizzes.php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="test-result success">✅ Quiz API works!</div>
+                        <div class="test-result info">Found ${data.quizzes.length} quizzes</div>
+                        <div class="test-result info">Response: <code>${JSON.stringify(data, null, 2)}</code></div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="test-result error">❌ Quiz API failed</div>
+                        <div class="test-result warning">${data.message}</div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="test-result error">❌ Cannot reach api/get_quizzes.php</div>
+                    <div class="test-result warning">Error: ${error.message}</div>
+                    <div class="test-result warning">Check: Is Apache running? Are files in C:/xampp/htdocs/8bitbrain/?</div>
+                `;
+            }
+        }
+
+        // Auto-run location check on load
+        console.log('🔧 Diagnostic page loaded');
+        console.log('📍 Current URL:', window.location.href);
+        console.log('📍 Protocol:', window.location.protocol);
+    </script>
+</body>
+</html>
