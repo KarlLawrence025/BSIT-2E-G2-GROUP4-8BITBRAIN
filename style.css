@@ -2483,6 +2483,7 @@ header {
     .data-table td {
         padding: var(--spacing-sm);
     }
+<<<<<<< HEAD
 }
 /* ========================================
    FEEDBACK PAGE STYLES
@@ -2655,3 +2656,6 @@ header {
     font-size: 28px;
   }
 }
+=======
+}
+>>>>>>> 4f141e866d0ffc8f4c349665264734fd4d3fdbe6
