@@ -142,7 +142,6 @@ if (document.getElementById("loginForm")) {
       return;
     }
 
-<<<<<<< HEAD
     try {
       // Call login API to verify credentials
       const response = await fetch('api/login.php', {
@@ -151,23 +150,6 @@ if (document.getElementById("loginForm")) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-=======
-    console.log("Login attempt:", formData);
-
-    if (currentAccountType === "admin") {
-      alert(`Admin Login Successful!\nWelcome, ${formData.name}!`);
-      window.location.href = "dashboard-admin.html";
-
-    } else {
-      alert(`User Login Successful!\nWelcome, ${formData.name}!`);
-      window.location.href = "dashboard-user.html";
-    }
-
-    if (formData.remember) {
-      localStorage.setItem(
-        "rememberedUser",
-        JSON.stringify({
->>>>>>> 4f141e866d0ffc8f4c349665264734fd4d3fdbe6
           email: formData.email,
           password: formData.password
         })
@@ -177,7 +159,7 @@ if (document.getElementById("loginForm")) {
 
       if (result.success) {
         const user = result.user;
-        
+
         // CHECK: Account type from database must match selected type
         if (user.account_type !== selectedAccountType) {
           alert(
@@ -188,7 +170,7 @@ if (document.getElementById("loginForm")) {
           );
           return;
         }
-        
+
         // Store user data in session
         sessionStorage.setItem('currentUser', JSON.stringify({
           id: user.id,
@@ -567,6 +549,55 @@ const UserCRUD = {
         );
     }
 };
+
+// ============================================
+// LEADERBOARD PAGE - Dynamic Top 50
+// ============================================
+
+async function loadLeaderboard(mode = '') {
+  const endpoint = mode ? `api/get_leaderboard.php?mode=${encodeURIComponent(mode)}` : 'api/get_leaderboard.php';
+  try {
+    const response = await fetch(endpoint);
+    const result = await response.json();
+
+    const tableBody = document.querySelector('#leaderboardTable tbody');
+    const emptyState = document.querySelector('#leaderboardEmpty');
+
+    if (!tableBody || !emptyState) return;
+
+    tableBody.innerHTML = '';
+
+    if (!result.success || !Array.isArray(result.data) || result.data.length === 0) {
+      emptyState.style.display = 'block';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+
+    result.data.forEach((entry) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${entry.rank}</td>
+        <td>${entry.fullname || entry.username}</td>
+        <td>${entry.mode}</td>
+        <td>${entry.score}</td>
+        <td>${entry.correct != null && entry.total != null ? `${entry.correct}/${entry.total}` : '–'}</td>
+        <td>${new Date(entry.created_at).toLocaleString()}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+  } catch (error) {
+    console.error('Could not load leaderboard', error);
+  }
+}
+
+if (document.querySelector('.leaderboards-section')) {
+  const modeSelect = document.getElementById('modeSelect');
+  modeSelect?.addEventListener('change', (e) => {
+    loadLeaderboard(e.target.value);
+  });
+  loadLeaderboard();
+}
 
 // ============================================
 // QUIZ CRUD OPERATIONS

@@ -39,74 +39,36 @@
     <main>
       <section class="leaderboards-section">
         <h1>Leaderboards</h1>
-        <p>Welcome to the 8BitBrain Leaderboards!</p>
-        <div class="leaderboards-grid">
-          <div class="leaderboards-item-big">
-            <p>Single Player Ranking</p>
-            <div class="leaderboards-rank">
-              <h2 class="leaderboards-number">#1.</h2>
-              <img
-                class="leaderboards-img"
-                src="imgs/placeholder.jpg"
-                alt="Leaderboard 1"
-              />
-              <p class="leaderboards-name">Lance Jasper Porciuncula</p>
-            </div>
-            <button class="btn-leaderboards">View all</button>
-          </div>
-          <div class="leaderboards-item">
-            <p>Timed Quiz Ranking</p>
-            <div class="leaderboards-rank">
-              <h2 class="leaderboards-number">#1.</h2>
-              <img
-                class="leaderboards-img"
-                src="imgs/placeholder.jpg"
-                alt="Leaderboard 1"
-              />
-              <p class="leaderboards-name">Luis Garcia</p>
-            </div>
-            <button class="btn-leaderboards">View all</button>
-          </div>
-          <div class="leaderboards-item">
-            <p>Endless Quiz Ranking</p>
-            <div class="leaderboards-rank">
-              <h2 class="leaderboards-number">#1.</h2>
-              <img
-                class="leaderboards-img"
-                src="imgs/placeholder.jpg"
-                alt="Leaderboard 2"
-              />
-              <p class="leaderboards-name">Hanz Galgana</p>
-            </div>
-            <button class="btn-leaderboards">View all</button>
-          </div>
-          <div class="leaderboards-item">
-            <p>Multiplayer Ranking</p>
-            <div class="leaderboards-rank">
-              <h2 class="leaderboards-number">#1.</h2>
-              <img
-                class="leaderboards-img"
-                src="imgs/placeholder.jpg"
-                alt="Leaderboard 3"
-              />
-              <p class="leaderboards-name">Angela Bairan</p>
-            </div>
-            <button class="btn-leaderboards">View all</button>
-          </div>
-          <div class="leaderboards-item">
-            <p>Memory Match Ranking</p>
-            <div class="leaderboards-rank">
-              <h2 class="leaderboards-number">#1.</h2>
-              <img
-                class="leaderboards-img"
-                src="imgs/placeholder.jpg"
-                alt="Leaderboard 4"
-              />
-              <p class="leaderboards-name">Karl Pacia</p>
-            </div>
-            <button class="btn-leaderboards">View all</button>
-          </div>
+        <p>Welcome to the 8BitBrain Leaderboards! Top 50 scores are shown below.</p>
+
+        <div class="leaderboards-filter">
+          <label for="modeSelect">Mode:</label>
+          <select id="modeSelect">
+            <option value="">All</option>
+            <option value="single">Single Player</option>
+            <option value="timed">Timed Quiz</option>
+            <option value="endless">Endless Quiz</option>
+            <option value="multiplayer">Multiplayer</option>
+            <option value="memory">Memory Match</option>
+            <option value="ranked">Ranked Quiz</option>
+          </select>
         </div>
+
+        <table id="leaderboardTable" class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Player</th>
+              <th>Mode</th>
+              <th>Score</th>
+              <th>Correct/Total</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <div id="leaderboardEmpty" class="message" style="display:none;">No leaderboard entries yet.</div>
       </section>
     </main>
     <script src="script.js"></script>

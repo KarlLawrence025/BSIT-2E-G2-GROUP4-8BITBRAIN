@@ -58,6 +58,24 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `username` (`username`);
 
 --
+-- Table structure for table `leaderboard`
+--
+CREATE TABLE `leaderboard` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `fullname` varchar(100) NOT NULL,
+  `mode` varchar(50) NOT NULL,
+  `score` int(11) NOT NULL DEFAULT 0,
+  `correct` int(11) DEFAULT NULL,
+  `total` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `leaderboard_user_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
