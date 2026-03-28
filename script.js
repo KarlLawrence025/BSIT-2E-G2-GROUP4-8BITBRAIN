@@ -5,6 +5,30 @@
 
 console.log("JS loaded 🚀");
 
+document.addEventListener("DOMContentLoaded", () => {
+  const startBtn = document.querySelector(".hero button"); // your Start Quiz button
+
+  startBtn.addEventListener("click", () => {
+    // Define available modes
+    const modes = [
+      "single_player",
+      "timed_quiz",
+      "ranked_quiz",
+      "memory_match",
+      "endless_quiz",
+    ];
+
+    // Pick a random mode
+    const randomMode = modes[Math.floor(Math.random() * modes.length)];
+
+    // Save to localStorage so your quiz system picks it up
+    localStorage.setItem("selectedMode", randomMode);
+
+    // Redirect to quiz selection/game page
+    window.location.href = "quiz.html"; // adjust to your quiz page
+  });
+});
+
 // ========================================
 // MODES
 // ========================================

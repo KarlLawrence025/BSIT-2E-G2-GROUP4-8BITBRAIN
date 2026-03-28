@@ -70,7 +70,7 @@ function setModeSettings() {
   switch (currentMode) {
     case "timed_quiz":
       timedMode = true;
-      timeLimit = 600; // 10 minutes
+      timeLimit = 60; // 1 minute
       break;
     case "ranked_quiz":
       rankedMode = true;
@@ -504,25 +504,31 @@ function showQuizResults(
   document.getElementById("quizGame").style.display = "none";
   document.getElementById("quizResults").style.display = "block";
 
-  // Update result elements
-  document.getElementById("finalScore").textContent = finalScore;
-  document.getElementById("correctAnswers").textContent = correctAnswers;
-  document.getElementById("totalQuestions").textContent = totalQuestions;
-  document.getElementById("timeTaken").textContent = formatTime(timeTaken);
-
-  // Mode-specific messages
   const modeTitle = document.getElementById("modeTitle");
-  if (modeTitle) {
-    let title = "Quiz Complete!";
-    if (endlessMode) {
-      title = `Endless Mode - ${endlessLives > 0 ? "Survived!" : "Game Over!"}`;
-    } else if (memoryMatchMode) {
-      title = "Memory Match Complete!";
-    } else if (rankedMode) {
-      title = "Ranked Quiz Complete!";
-    }
-    modeTitle.textContent = title;
+  const finalScoreEl = document.getElementById("finalScore");
+  const correctAnswersEl = document.getElementById("correctAnswers");
+  const totalQuestionsEl = document.getElementById("totalQuestions");
+  const timeTakenEl = document.getElementById("timeTaken");
+
+  let title = "Quiz Complete!";
+  let summaryCorrect = correctAnswers;
+  let summaryTotal = totalQuestions;
+
+  if (endlessMode) {
+    title = `Endless Mode - ${endlessLives > 0 ? "Survived!" : "Game Over!"}`;
+  } else if (memoryMatchMode) {
+    title = "Memory Match Complete!";
+    summaryCorrect = matchedPairs;
+    summaryTotal = currentQuestions.length / 2; // total pairs
+  } else if (rankedMode) {
+    title = "Ranked Quiz Complete!";
   }
+
+  if (modeTitle) modeTitle.textContent = title;
+  if (finalScoreEl) finalScoreEl.textContent = finalScore;
+  if (correctAnswersEl) correctAnswersEl.textContent = summaryCorrect;
+  if (totalQuestionsEl) totalQuestionsEl.textContent = summaryTotal;
+  if (timeTakenEl) timeTakenEl.textContent = formatTime(timeTaken);
 }
 
 function formatTime(seconds) {
