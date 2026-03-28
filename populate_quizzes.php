@@ -63,7 +63,8 @@ $hardwareQuestions = [
 foreach ($hardwareQuestions as $q) {
     $questionId = insertQuestion($hardwareQuizId, $q['question']);
     foreach ($q['options'] as $option) {
-        $isCorrect = (strpos($option, $q['correct'] . '.') === 0) ? 1 : 0;
+        $firstChar = strtoupper(substr(trim($option), 0, 1));
+        $isCorrect = ($firstChar === strtoupper(trim($q['correct']))) ? 1 : 0;
         insertAnswer($questionId, $option, $isCorrect);
     }
 }
@@ -152,7 +153,8 @@ $softwareQuestions = [
 foreach ($softwareQuestions as $q) {
     $questionId = insertQuestion($softwareQuizId, $q['question']);
     foreach ($q['options'] as $option) {
-        $isCorrect = (strpos($option, $q['correct'] . '.') === 0) ? 1 : 0;
+        $firstChar = strtoupper(substr(trim($option), 0, 1));
+        $isCorrect = ($firstChar === strtoupper(trim($q['correct']))) ? 1 : 0;
         insertAnswer($questionId, $option, $isCorrect);
     }
 }
@@ -241,7 +243,8 @@ $internetQuestions = [
 foreach ($internetQuestions as $q) {
     $questionId = insertQuestion($internetQuizId, $q['question']);
     foreach ($q['options'] as $option) {
-        $isCorrect = (strpos($option, $q['correct'] . '.') === 0) ? 1 : 0;
+        $firstChar = strtoupper(substr(trim($option), 0, 1));
+        $isCorrect = ($firstChar === strtoupper(trim($q['correct']))) ? 1 : 0;
         insertAnswer($questionId, $option, $isCorrect);
     }
 }
@@ -330,7 +333,8 @@ $networkQuestions = [
 foreach ($networkQuestions as $q) {
     $questionId = insertQuestion($networkQuizId, $q['question']);
     foreach ($q['options'] as $option) {
-        $isCorrect = (strpos($option, $q['correct'] . '.') === 0) ? 1 : 0;
+        $firstChar = strtoupper(substr(trim($option), 0, 1));
+        $isCorrect = ($firstChar === strtoupper(trim($q['correct']))) ? 1 : 0;
         insertAnswer($questionId, $option, $isCorrect);
     }
 }
@@ -419,7 +423,8 @@ $cyberQuestions = [
 foreach ($cyberQuestions as $q) {
     $questionId = insertQuestion($cyberQuizId, $q['question']);
     foreach ($q['options'] as $option) {
-        $isCorrect = (strpos($option, $q['correct'] . '.') === 0) ? 1 : 0;
+        $firstChar = strtoupper(substr(trim($option), 0, 1));
+        $isCorrect = ($firstChar === strtoupper(trim($q['correct']))) ? 1 : 0;
         insertAnswer($questionId, $option, $isCorrect);
     }
 }

@@ -4,20 +4,24 @@ header('Access-Control-Allow-Origin: *');
 
 require_once '../db.php';
 
-// Get all quizzes with question count
+// Get mode from query string (default: single_player)
+$mode = isset($_GET['mode']) ? $_GET['mode'] : 'single_player';
+
+// Get quizzes filtered by mode, with question count
 $sql = "SELECT q.id, q.title, q.category, q.difficulty, q.created_at,
         (SELECT COUNT(*) FROM questions WHERE quiz_id = q.id) as question_count
         FROM quizzes q
+        WHERE q.mode = ?
         ORDER BY q.created_at DESC";
 
-$result = $conn->query($sql);
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $mode);
+$stmt->execute();
+$result = $stmt->get_result();
 
 $quizzes = array();
-
-if ($result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
-        $quizzes[] = $row;
-    }
+while ($row = $result->fetch_assoc()) {
+    $quizzes[] = $row;
 }
 
 echo json_encode([
@@ -26,5 +30,6 @@ echo json_encode([
     'count' => count($quizzes)
 ]);
 
+$stmt->close();
 $conn->close();
 ?>
