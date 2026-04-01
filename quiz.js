@@ -1,545 +1,363 @@
 // ========================================
 // QUIZ SYSTEM - MAIN QUIZ LOGIC
-// Handles all quiz modes: timed, ranked, memory match, endless, single player
 // ========================================
 
 console.log("Quiz system loaded 🎯");
 
-// ========================================
-// GLOBAL QUIZ STATE
-// ========================================
-
-let currentMode = "";
-let currentQuiz = null;
-let currentQuestions = [];
+// ── Global state ──────────────────────────────────────────────────────────────
+let currentMode          = "";
+let currentQuiz          = null;
+let currentQuestions     = [];
 let currentQuestionIndex = 0;
-let userAnswers = [];
-let quizStartTime = null;
-let quizTimer = null;
-let score = 0;
-let timeLimit = 600; // 10 minutes default
-let isQuizActive = false;
+let userAnswers          = [];
+let quizStartTime        = null;
+let quizTimer            = null;
+let score                = 0;
+let timeLimit            = 0;
+let isQuizActive         = false;
+let correctAnswers       = 0;
 
-// Mode-specific variables
-let endlessMode = false;
-let memoryMatchMode = false;
-let rankedMode = false;
-let timedMode = false;
+let endlessMode      = false;
+let memoryMatchMode  = false;
+let rankedMode       = false;
+let timedMode        = false;
 let singlePlayerMode = false;
 
-// Memory match specific
-let memoryCards = [];
-let flippedCards = [];
-let matchedPairs = 0;
-
-// Endless mode specific
-let endlessLives = 3;
+let memoryCards   = [];
+let flippedCards  = [];
+let matchedPairs  = 0;
+let endlessLives  = 3;
 let endlessStreak = 0;
 
-// ========================================
-// INITIALIZATION
-// ========================================
-
-document.addEventListener("DOMContentLoaded", () => {
-  initializeQuiz();
-});
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => { initializeQuiz(); });
 
 function initializeQuiz() {
-  // Get mode from localStorage
   currentMode = localStorage.getItem("selectedMode") || "single_player";
-
-  // Set mode-specific settings
   setModeSettings();
-
-  // Load quiz selection
   loadQuizSelection();
-
-  // Setup event listeners
   setupEventListeners();
 }
 
 function setModeSettings() {
-  // Reset all mode flags
-  endlessMode =
-    memoryMatchMode =
-    rankedMode =
-    timedMode =
-    singlePlayerMode =
-      false;
-
+  endlessMode = memoryMatchMode = rankedMode = timedMode = singlePlayerMode = false;
   switch (currentMode) {
-    case "timed_quiz":
-      timedMode = true;
-      timeLimit = 60; // 1 minute
-      break;
-    case "ranked_quiz":
-      rankedMode = true;
-      timeLimit = 300; // 5 minutes for competitive
-      break;
-    case "memory_match":
-      memoryMatchMode = true;
-      timeLimit = 180; // 3 minutes
-      break;
-    case "endless_quiz":
-      endlessMode = true;
-      timeLimit = 0; // No time limit
-      break;
-    case "single_player":
-    default:
-      singlePlayerMode = true;
-      timeLimit = 0; // No time limit
-      break;
+    case "timed_quiz":   timedMode        = true; timeLimit = 60;  break;
+    case "ranked_quiz":  rankedMode       = true; timeLimit = 300; break;
+    case "memory_match": memoryMatchMode  = true; timeLimit = 180; break;
+    case "endless_quiz": endlessMode      = true; timeLimit = 0;   break;
+    default:             singlePlayerMode = true; timeLimit = 0;   break;
   }
 }
 
-// ========================================
-// QUIZ SELECTION
-// ========================================
-
+// ── Quiz Selection ────────────────────────────────────────────────────────────
 async function loadQuizSelection() {
   try {
     const response = await fetch(`api/get_quizzes.php?mode=${currentMode}`);
-    const data = await response.json();
-
-    if (!data.success) {
-      showError("Failed to load quizzes");
-      return;
-    }
-
+    const data     = await response.json();
+    if (!data.success) { showError("Failed to load quizzes"); return; }
     displayQuizSelection(data.data);
-  } catch (error) {
-    console.error("Error loading quizzes:", error);
-    showError("Error loading quizzes");
-  }
+  } catch (e) { showError("Error loading quizzes"); }
 }
 
 function displayQuizSelection(quizzes) {
   const container = document.getElementById("quizGrid");
   if (!container) return;
-
   container.innerHTML = "";
 
-  quizzes.forEach((quiz) => {
-    const quizCard = document.createElement("div");
-    quizCard.className = "quiz-card";
-    quizCard.onclick = () => selectQuiz(quiz.id);
+  if (quizzes.length === 0) {
+    container.innerHTML = `
+      <div style="color:#fff;text-align:center;grid-column:1/-1;padding:40px;">
+        <h3>No quizzes available for this mode yet.</h3>
+        <p style="opacity:.7;margin-top:10px;">Ask your admin to create some!</p>
+      </div>`;
+    return;
+  }
 
-    quizCard.innerHTML = `
-            <h3>${quiz.title}</h3>
-            <p class="category">${quiz.category}</p>
-            <p class="difficulty ${quiz.difficulty}">${quiz.difficulty}</p>
-            <p class="question-count">${quiz.question_count} questions</p>
-        `;
-
-    container.appendChild(quizCard);
+  quizzes.forEach(quiz => {
+    const card     = document.createElement("div");
+    card.className = "quiz-card";
+    card.onclick   = () => selectQuiz(quiz.id);
+    card.innerHTML = `
+      <h3>${quiz.title}</h3>
+      <p class="category">${quiz.category}</p>
+      <p class="difficulty ${quiz.difficulty}">${quiz.difficulty}</p>
+      <p class="question-count">${quiz.question_count} questions</p>`;
+    container.appendChild(card);
   });
 }
 
 function selectQuiz(quizId) {
-  // Store selected quiz
   localStorage.setItem("selectedQuizId", quizId);
-
-  // Start the quiz
   startQuiz();
 }
 
-// ========================================
-// QUIZ GAMEPLAY
-// ========================================
-
+// ── Quiz Gameplay ─────────────────────────────────────────────────────────────
 async function startQuiz() {
   const quizId = localStorage.getItem("selectedQuizId");
-  if (!quizId) {
-    showError("No quiz selected");
-    return;
-  }
+  if (!quizId) { showError("No quiz selected"); return; }
 
   try {
-    const response = await fetch(
-      `api/get_quiz_questions.php?quiz_id=${quizId}`,
-    );
-    const data = await response.json();
+    const response = await fetch(`api/get_quiz_questions.php?quiz_id=${quizId}`);
+    const data     = await response.json();
+    if (!data.success) { showError("Failed to load quiz questions"); return; }
 
-    if (!data.success) {
-      showError("Failed to load quiz questions");
-      return;
-    }
-
-    currentQuiz = data.quiz;
+    currentQuiz      = data.quiz;
     currentQuestions = data.questions;
 
-    // Prepare questions based on mode
     prepareQuestionsForMode();
-
-    // Initialize quiz state
     resetQuizState();
-
-    // Start the quiz
     showQuizGame();
     loadQuestion();
-
-    if (timedMode || rankedMode) {
-      startTimer();
-    }
-  } catch (error) {
-    console.error("Error starting quiz:", error);
-    showError("Error starting quiz");
-  }
+    if (timedMode || rankedMode) startTimer();
+  } catch (e) { showError("Error starting quiz"); }
 }
 
 function prepareQuestionsForMode() {
   if (memoryMatchMode) {
-    // For memory match, create pairs of terms and definitions
     currentQuestions = createMemoryMatchPairs(currentQuestions);
   } else {
-    // Shuffle questions for other modes
     currentQuestions = shuffleArray(currentQuestions);
   }
 }
 
 function createMemoryMatchPairs(questions) {
   const pairs = [];
-
-  questions.forEach((question) => {
-    const correctAnswer = question.answers.find((a) => a.is_correct);
-    if (correctAnswer) {
-      pairs.push({
-        type: "term",
-        content: question.question_text,
-        pairId: question.id,
-      });
-      pairs.push({
-        type: "definition",
-        content: correctAnswer.text,
-        pairId: question.id,
-      });
+  questions.forEach(q => {
+    const correct = q.answers.find(a => a.is_correct);
+    if (correct) {
+      pairs.push({ type: "term",       content: q.question, pairId: q.id });
+      pairs.push({ type: "definition", content: correct.text, pairId: q.id });
     }
   });
-
   return shuffleArray(pairs);
 }
 
 function resetQuizState() {
   currentQuestionIndex = 0;
-  userAnswers = [];
-  score = 0;
-  quizStartTime = Date.now();
-  isQuizActive = true;
-  endlessLives = endlessMode ? 3 : 0;
-  endlessStreak = 0;
-  matchedPairs = 0;
-  flippedCards = [];
+  userAnswers          = [];
+  score                = 0;
+  correctAnswers       = 0;
+  quizStartTime        = Date.now();
+  isQuizActive         = true;
+  endlessLives         = endlessMode ? 3 : 0;
+  endlessStreak        = 0;
+  matchedPairs         = 0;
+  flippedCards         = [];
 }
 
 function showQuizGame() {
   document.getElementById("quizSelection").style.display = "none";
-  document.getElementById("quizGame").style.display = "block";
-
+  document.getElementById("quizGame").style.display      = "block";
   updateQuizHeader();
 }
 
 function updateQuizHeader() {
-  const titleEl = document.getElementById("quizTitle");
+  const titleEl   = document.getElementById("quizTitle");
   const counterEl = document.getElementById("questionCounter");
-  const scoreEl = document.getElementById("score");
+  const scoreEl   = document.getElementById("score");
 
   if (titleEl) titleEl.textContent = currentQuiz.title;
   if (scoreEl) scoreEl.textContent = `Score: ${score}`;
 
   if (memoryMatchMode) {
-    if (counterEl)
-      counterEl.textContent = `Pairs: ${matchedPairs}/${currentQuestions.length / 2}`;
+    if (counterEl) counterEl.textContent = `Pairs: ${matchedPairs}/${currentQuestions.length / 2}`;
   } else if (endlessMode) {
-    if (counterEl)
-      counterEl.textContent = `Lives: ${endlessLives} | Streak: ${endlessStreak}`;
+    if (counterEl) counterEl.textContent = `Lives: ${endlessLives} | Streak: ${endlessStreak}`;
   } else {
-    if (counterEl)
-      counterEl.textContent = `Question ${currentQuestionIndex + 1} of ${currentQuestions.length}`;
+    if (counterEl) counterEl.textContent = `Question ${currentQuestionIndex + 1} of ${currentQuestions.length}`;
   }
 }
 
 function loadQuestion() {
   if (!isQuizActive) return;
-
-  if (memoryMatchMode) {
-    loadMemoryMatchQuestion();
-  } else {
-    loadStandardQuestion();
-  }
+  memoryMatchMode ? loadMemoryMatchQuestion() : loadStandardQuestion();
 }
 
 function loadStandardQuestion() {
   const question = currentQuestions[currentQuestionIndex];
-  if (!question) {
-    endQuiz();
-    return;
-  }
+  if (!question) { endQuiz(); return; }
 
   const questionEl = document.getElementById("questionText");
-  const optionsEl = document.getElementById("options");
+  const optionsEl  = document.getElementById("options");
 
   if (questionEl) questionEl.textContent = question.question;
   if (optionsEl) {
     optionsEl.innerHTML = "";
     question.answers.forEach((answer, index) => {
-      const optionDiv = document.createElement("div");
-      optionDiv.className = "option";
-      optionDiv.textContent = answer.text;
-      optionDiv.onclick = () => selectAnswer(index);
-      optionsEl.appendChild(optionDiv);
+      const div     = document.createElement("div");
+      div.className = "option";
+      div.textContent = answer.text;
+      div.onclick   = () => selectAnswer(index);
+      optionsEl.appendChild(div);
     });
   }
-
   updateQuizHeader();
 }
 
 function loadMemoryMatchQuestion() {
   const container = document.getElementById("questionText").parentElement;
-  const memoryGrid = document.createElement("div");
-  memoryGrid.className = "memory-grid";
-  memoryGrid.id = "memoryGrid";
+  container.innerHTML = "<h3>Memory Match — pair the terms with their definitions</h3>";
 
-  // Clear previous content
-  container.innerHTML =
-    "<h3>Memory Match - Match the terms with their definitions</h3>";
-  container.appendChild(memoryGrid);
+  const grid     = document.createElement("div");
+  grid.className = "memory-grid";
+  grid.id        = "memoryGrid";
 
-  // Create memory cards
   currentQuestions.forEach((item, index) => {
-    const card = document.createElement("div");
-    card.className = "memory-card";
-    card.dataset.index = index;
+    const card          = document.createElement("div");
+    card.className      = "memory-card";
+    card.dataset.index  = index;
     card.dataset.pairId = item.pairId;
-    card.dataset.type = item.type;
-    card.onclick = () => flipCard(card);
+    card.dataset.type   = item.type;
+    card.onclick        = () => flipCard(card);
 
-    const cardContent = document.createElement("div");
-    cardContent.className = "card-content";
-    cardContent.textContent = item.content;
-
-    card.appendChild(cardContent);
-    memoryGrid.appendChild(card);
+    const content       = document.createElement("div");
+    content.className   = "card-content";
+    content.textContent = item.content;
+    card.appendChild(content);
+    grid.appendChild(card);
   });
-
+  container.appendChild(grid);
   memoryCards = document.querySelectorAll(".memory-card");
 }
 
 function flipCard(card) {
-  if (
-    card.classList.contains("flipped") ||
-    card.classList.contains("matched") ||
-    flippedCards.length >= 2
-  ) {
-    return;
-  }
+  if (card.classList.contains("flipped") ||
+      card.classList.contains("matched") ||
+      flippedCards.length >= 2) return;
 
   card.classList.add("flipped");
   flippedCards.push(card);
-
-  if (flippedCards.length === 2) {
-    setTimeout(checkMatch, 1000);
-  }
+  if (flippedCards.length === 2) setTimeout(checkMatch, 1000);
 }
 
 function checkMatch() {
-  const [card1, card2] = flippedCards;
-
-  if (
-    card1.dataset.pairId === card2.dataset.pairId &&
-    card1.dataset.type !== card2.dataset.type
-  ) {
-    // Match found
-    card1.classList.add("matched");
-    card2.classList.add("matched");
+  const [c1, c2] = flippedCards;
+  if (c1.dataset.pairId === c2.dataset.pairId && c1.dataset.type !== c2.dataset.type) {
+    c1.classList.add("matched");
+    c2.classList.add("matched");
     matchedPairs++;
     score += 10;
-
-    // Check if all pairs are matched
-    if (matchedPairs === currentQuestions.length / 2) {
-      endQuiz();
-    }
+    if (matchedPairs === currentQuestions.length / 2) endQuiz();
   } else {
-    // No match
-    card1.classList.remove("flipped");
-    card2.classList.remove("flipped");
-
-    if (endlessMode) {
-      endlessLives--;
-      if (endlessLives <= 0) {
-        endQuiz();
-      }
-    }
+    c1.classList.remove("flipped");
+    c2.classList.remove("flipped");
+    if (endlessMode) { endlessLives--; if (endlessLives <= 0) endQuiz(); }
   }
-
   flippedCards = [];
   updateQuizHeader();
 }
 
-let correctAnswers = 0;
-
 function selectAnswer(answerIndex) {
-  const question = currentQuestions[currentQuestionIndex];
-  const selectedAnswer = question.answers[answerIndex];
+  const question   = currentQuestions[currentQuestionIndex];
+  const answer     = question.answers[answerIndex];
+  const isCorrect  = Number(answer.is_correct) === 1;
 
-  userAnswers.push({
-    questionId: question.id,
-    selectedAnswer: answerIndex,
-    isCorrect: Number(selectedAnswer.is_correct) === 1,
-  });
+  userAnswers.push({ questionId: question.id, selectedAnswer: answerIndex, isCorrect });
 
-  if (Number(selectedAnswer.is_correct) === 1) {
+  if (isCorrect) {
     score += 10;
-    correctAnswers++; // ✅ increment here
+    correctAnswers++;
     endlessStreak++;
   } else {
     if (endlessMode) {
       endlessLives--;
       endlessStreak = 0;
-      if (endlessLives <= 0) {
-        endQuiz();
-        return;
-      }
+      if (endlessLives <= 0) { endQuiz(); return; }
     }
   }
 
   currentQuestionIndex++;
-  if (currentQuestionIndex >= currentQuestions.length) {
-    endQuiz();
-  } else {
-    loadQuestion();
-  }
+  currentQuestionIndex >= currentQuestions.length ? endQuiz() : loadQuestion();
 }
 
-// ========================================
-// TIMER FUNCTIONS
-// ========================================
-
+// ── Timer ─────────────────────────────────────────────────────────────────────
 function startTimer() {
   let timeLeft = timeLimit;
   updateTimerDisplay(timeLeft);
-
   quizTimer = setInterval(() => {
     timeLeft--;
     updateTimerDisplay(timeLeft);
-
-    if (timeLeft <= 0) {
-      clearInterval(quizTimer);
-      endQuiz();
-    }
+    if (timeLeft <= 0) { clearInterval(quizTimer); endQuiz(); }
   }, 1000);
 }
 
 function updateTimerDisplay(seconds) {
-  const timerEl = document.getElementById("timer");
-  if (timerEl) {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    timerEl.textContent = `Time: ${minutes}:${secs.toString().padStart(2, "0")}`;
+  const el = document.getElementById("timer");
+  if (el) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    el.textContent = `Time: ${m}:${s.toString().padStart(2, "0")}`;
   }
 }
 
-// ========================================
-// QUIZ ENDING
-// ========================================
-
+// ── End Quiz ──────────────────────────────────────────────────────────────────
 function endQuiz() {
   isQuizActive = false;
   clearInterval(quizTimer);
 
-  const timeTaken = Math.floor((Date.now() - quizStartTime) / 1000);
-  const correctAnswers = userAnswers.filter((a) => a.isCorrect).length; // ✅ count correct
-  const totalQuestions = endlessMode
-    ? userAnswers.length
-    : currentQuestions.length;
+  const timeTaken      = Math.floor((Date.now() - quizStartTime) / 1000);
+  const totalQuestions = endlessMode ? userAnswers.length : currentQuestions.length;
 
-  // Save result
-  saveQuizResult(score, correctAnswers, totalQuestions, timeTaken);
-
-  // Show results
-  showQuizResults(score, correctAnswers, totalQuestions, timeTaken);
+  saveQuizResult(correctAnswers, totalQuestions, timeTaken).then(pointsEarned => {
+    showQuizResults(correctAnswers, totalQuestions, timeTaken, pointsEarned);
+  });
 }
 
-async function saveQuizResult(
-  score,
-  correctAnswers,
-  totalQuestions,
-  timeTaken,
-) {
+async function saveQuizResult(correct, total, timeTaken) {
   try {
-    const result = {
-      quiz_id: currentQuiz.id,
-      mode: currentMode,
-      score: score,
-      correct_answers: correctAnswers,
-      total_questions: totalQuestions,
-      time_taken: timeTaken,
-    };
-
-    // Add user_id if logged in (you can implement user session management)
-    // result.user_id = getCurrentUserId();
-
     const response = await fetch("api/save_quiz_result.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(result),
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({
+        quiz_id:         currentQuiz.id,
+        mode:            currentMode,
+        correct_answers: correct,
+        total_questions: total,
+        time_taken:      timeTaken,
+        time_limit:      timeLimit,    // needed for time bonus calculation
+        user_id:         SESSION_USER_ID
+      })
     });
-
     const data = await response.json();
-    if (!data.success) {
-      console.error("Failed to save quiz result:", data.message);
-    }
-  } catch (error) {
-    console.error("Error saving quiz result:", error);
+    return data.points_earned || 0;
+  } catch (e) {
+    console.error("Error saving result:", e);
+    return 0;
   }
 }
 
-function showQuizResults(
-  finalScore,
-  correctAnswers,
-  totalQuestions,
-  timeTaken,
-) {
-  document.getElementById("quizGame").style.display = "none";
+function showQuizResults(correct, total, timeTaken, pointsEarned) {
+  document.getElementById("quizGame").style.display    = "none";
   document.getElementById("quizResults").style.display = "block";
 
-  const modeTitle = document.getElementById("modeTitle");
-  const finalScoreEl = document.getElementById("finalScore");
-  const correctAnswersEl = document.getElementById("correctAnswers");
-  const totalQuestionsEl = document.getElementById("totalQuestions");
-  const timeTakenEl = document.getElementById("timeTaken");
+  let title          = "Quiz Complete!";
+  let summaryCorrect = correct;
+  let summaryTotal   = total;
 
-  let title = "Quiz Complete!";
-  let summaryCorrect = correctAnswers;
-  let summaryTotal = totalQuestions;
-
-  if (endlessMode) {
-    title = `Endless Mode - ${endlessLives > 0 ? "Survived!" : "Game Over!"}`;
-  } else if (memoryMatchMode) {
-    title = "Memory Match Complete!";
+  if (endlessMode)     { title = endlessLives > 0 ? "Endless — Survived!" : "Game Over!"; }
+  if (memoryMatchMode) {
+    title          = "Memory Match Complete!";
     summaryCorrect = matchedPairs;
-    summaryTotal = currentQuestions.length / 2; // total pairs
-  } else if (rankedMode) {
-    title = "Ranked Quiz Complete!";
+    summaryTotal   = currentQuestions.length / 2;
   }
+  if (rankedMode) { title = "Ranked Quiz Complete!"; }
 
-  if (modeTitle) modeTitle.textContent = title;
-  if (finalScoreEl) finalScoreEl.textContent = finalScore;
-  if (correctAnswersEl) correctAnswersEl.textContent = summaryCorrect;
-  if (totalQuestionsEl) totalQuestionsEl.textContent = summaryTotal;
-  if (timeTakenEl) timeTakenEl.textContent = formatTime(timeTaken);
+  document.getElementById("resultsModeTitle").textContent = title;
+  document.getElementById("correctAnswers").textContent   = summaryCorrect;
+  document.getElementById("totalQuestions").textContent   = summaryTotal;
+  document.getElementById("timeTaken").textContent        = formatTime(timeTaken);
+  document.getElementById("pointsEarned").textContent     = `+${pointsEarned}`;
+
+  resetFeedbackForm();
 }
 
+// ── Utilities ─────────────────────────────────────────────────────────────────
 function formatTime(seconds) {
-  const minutes = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
-
-// ========================================
-// UTILITY FUNCTIONS
-// ========================================
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -549,45 +367,100 @@ function shuffleArray(array) {
   return array;
 }
 
-function showError(message) {
-  alert(message);
-}
+function showError(message) { alert(message); }
 
 function setupEventListeners() {
-  // Quit button
-  const quitBtn = document.getElementById("quitBtn");
-  if (quitBtn) {
-    quitBtn.addEventListener("click", () => {
-      if (confirm("Are you sure you want to quit the quiz?")) {
-        endQuiz();
-      }
-    });
-  }
-
-  // Navigation buttons
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const submitBtn = document.getElementById("submitBtn");
-
-  if (prevBtn)
-    prevBtn.addEventListener("click", () => {
-      // Implement previous question logic if needed
-    });
-
-  if (nextBtn)
-    nextBtn.addEventListener("click", () => {
-      // Implement next question logic if needed
-    });
-
-  if (submitBtn)
-    submitBtn.addEventListener("click", () => {
-      endQuiz();
-    });
+  document.getElementById("quitBtn")?.addEventListener("click", () => {
+    if (confirm("Are you sure you want to quit?")) endQuiz();
+  });
+  document.getElementById("submitBtn")?.addEventListener("click", () => endQuiz());
 }
 
-// ========================================
-// MODE SPECIFIC LOGIC
-// ========================================
+// ── Feedback ──────────────────────────────────────────────────────────────────
+let selectedRating = 0;
 
-// Additional mode-specific functions can be added here
-// For example, special scoring for ranked mode, life system for endless, etc.
+function resetFeedbackForm() {
+  selectedRating = 0;
+  const form = document.getElementById("feedbackForm");
+  if (form) form.reset();
+
+  document.querySelectorAll(".star").forEach(s => s.classList.remove("active"));
+
+  const wrapper = document.getElementById("feedbackFormWrapper");
+  const success = document.getElementById("feedbackSuccess");
+  const btn     = document.getElementById("feedbackToggleBtn");
+  if (wrapper) wrapper.style.display = "none";
+  if (success) success.style.display = "none";
+  if (btn)     { btn.style.display = "inline-block"; btn.textContent = "Give Feedback"; }
+}
+
+function toggleFeedback() {
+  const wrapper = document.getElementById("feedbackFormWrapper");
+  const btn     = document.getElementById("feedbackToggleBtn");
+  if (!wrapper) return;
+  const isHidden        = wrapper.style.display === "none";
+  wrapper.style.display = isHidden ? "block" : "none";
+  if (btn) btn.style.display = isHidden ? "none" : "inline-block";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".star").forEach(star => {
+    star.addEventListener("click", () => {
+      selectedRating = parseInt(star.dataset.val);
+      document.getElementById("feedbackRating").value = selectedRating;
+      document.querySelectorAll(".star").forEach(s => {
+        s.classList.toggle("active", parseInt(s.dataset.val) <= selectedRating);
+      });
+    });
+    star.addEventListener("mouseenter", () => {
+      const val = parseInt(star.dataset.val);
+      document.querySelectorAll(".star").forEach(s => {
+        s.classList.toggle("hovered", parseInt(s.dataset.val) <= val);
+      });
+    });
+    star.addEventListener("mouseleave", () => {
+      document.querySelectorAll(".star").forEach(s => s.classList.remove("hovered"));
+    });
+  });
+});
+
+async function submitFeedback(event) {
+  event.preventDefault();
+  const text   = document.getElementById("feedbackText").value.trim();
+  const type   = document.getElementById("feedbackType").value;
+  const rating = selectedRating || null;
+
+  if (!text) { alert("Please write your feedback before submitting."); return; }
+
+  const btn = document.getElementById("feedbackSubmitBtn");
+  btn.textContent = "Submitting...";
+  btn.disabled    = true;
+
+  try {
+    const response = await fetch("api/submit_feedback.php", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({
+        user_id:       SESSION_USER_ID,
+        quiz_id:       currentQuiz?.id || null,
+        feedback_text: text,
+        feedback_type: type,
+        rating
+      })
+    });
+    const result = await response.json();
+
+    if (result.success) {
+      document.getElementById("feedbackForm").style.display    = "none";
+      document.getElementById("feedbackSuccess").style.display = "block";
+    } else {
+      alert("Error: " + result.message);
+      btn.textContent = "Submit Feedback";
+      btn.disabled    = false;
+    }
+  } catch (e) {
+    alert("Network error. Please try again.");
+    btn.textContent = "Submit Feedback";
+    btn.disabled    = false;
+  }
+}
