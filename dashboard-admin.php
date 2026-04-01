@@ -10,7 +10,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>8BitBrain</title>
+    <title>8BitBrain - Admin Dashboard</title>
 
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="imgs/Sans_Favi.png" type="image/png" />
@@ -33,39 +33,26 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
       <?php include("navbar.php"); ?>
     </header>
 
-  <!-- Main Content -->
   <main class="admin-main">
     <!-- Game Banner Section -->
     <section class="banner-section">
       <div class="carousel-container">
         <div class="carousel">
           <div class="slides-wrapper">
-            <div class="slide">
-              <div class="slide-content">🎮 Admin Dashboard v1.0</div>
-            </div>
-            <div class="slide">
-              <div class="slide-content">📊 Manage Users & Quizzes</div>
-            </div>
-            <div class="slide">
-              <div class="slide-content">✨ Track Feedback & Stats</div>
-            </div>
-            <div class="slide">
-              <div class="slide-content">🔧 Configure Quiz Resources</div>
-            </div>
-            <div class="slide">
-              <div class="slide-content">⚡ Power-Up Your Platform</div>
-            </div>
-            <div class="slide">
-              <div class="slide-content">🎮 Admin Dashboard v1.0</div>
-            </div>
+            <div class="slide"><div class="slide-content">🎮 Admin Dashboard v1.0</div></div>
+            <div class="slide"><div class="slide-content">📊 Manage Users &amp; Quizzes</div></div>
+            <div class="slide"><div class="slide-content">✨ Track Feedback &amp; Stats</div></div>
+            <div class="slide"><div class="slide-content">🔧 Configure Quiz Resources</div></div>
+            <div class="slide"><div class="slide-content">⚡ Power-Up Your Platform</div></div>
+            <!-- Duplicate first slide for seamless loop -->
+            <div class="slide"><div class="slide-content">🎮 Admin Dashboard v1.0</div></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Content Section with Tabs and Sidebar -->
+    <!-- Content Section -->
     <section class="content-section">
-      <!-- Tabs Navigation -->
       <div class="tabs-container">
         <div class="tabs-header">
           <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
@@ -76,8 +63,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
           <button class="tab-btn" data-tab="references">🔗 References</button>
         </div>
 
-        <!-- Main Content Area (Left Column) -->
         <div class="content-area">
+
           <!-- Tab 1: Dashboard Overview -->
           <div class="tab-content active" id="dashboard-tab">
             <h2 class="tab-title">Dashboard Overview</h2>
@@ -118,14 +105,11 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
                     <th>Username</th>
                     <th>Email</th>
                     <th>Role</th>
-                    <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="users-tbody">
-                  <tr>
-                    <td colspan="6" class="empty-state">No users found</td>
-                  </tr>
+                  <tr><td colspan="5" class="empty-state">No users found</td></tr>
                 </tbody>
               </table>
             </div>
@@ -152,7 +136,17 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
                   <option value="hard">Hard</option>
                 </select>
               </div>
-<<<<<<< HEAD
+              <!-- FIX: Mode field added so quizzes appear in the correct game mode -->
+              <div class="form-group">
+                <label for="quiz-mode">Game Mode</label>
+                <select id="quiz-mode" required>
+                  <option value="single_player">Single Player</option>
+                  <option value="timed_quiz">Timed Quiz</option>
+                  <option value="ranked_quiz">Ranked Quiz</option>
+                  <option value="memory_match">Memory Match</option>
+                  <option value="endless_quiz">Endless Quiz</option>
+                </select>
+              </div>
               <div class="form-group">
                 <label for="quiz-reference">Reference Link (Optional)</label>
                 <input type="url" id="quiz-reference" placeholder="https://example.com/reference">
@@ -160,8 +154,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
                   Add a reference URL for this quiz (e.g., study material, documentation, article)
                 </small>
               </div>
-=======
->>>>>>> 4f141e866d0ffc8f4c349665264734fd4d3fdbe6
               <div id="questions-container"></div>
               <button type="button" class="btn-admin btn-secondary" id="add-question-btn">+ Add Question</button>
               <button type="submit" class="btn-admin btn-primary">Create Quiz</button>
@@ -170,7 +162,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
 
           <!-- Tab 4: Quiz Management -->
           <div class="tab-content" id="quizzes-tab">
-            <h2 class="tab-title">Quiz Management & Import</h2>
+            <h2 class="tab-title">Quiz Management &amp; Import</h2>
             <div class="import-section">
               <h3>Import Quizzes</h3>
               <div class="import-controls">
@@ -192,9 +184,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
                   </tr>
                 </thead>
                 <tbody id="quizzes-tbody">
-                  <tr>
-                    <td colspan="6" class="empty-state">No quizzes found</td>
-                  </tr>
+                  <tr><td colspan="6" class="empty-state">No quizzes found</td></tr>
                 </tbody>
               </table>
             </div>
@@ -232,17 +222,16 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
                   </tr>
                 </thead>
                 <tbody id="references-tbody">
-                  <tr>
-                    <td colspan="5" class="empty-state">No references found</td>
-                  </tr>
+                  <tr><td colspan="5" class="empty-state">No references found</td></tr>
                 </tbody>
               </table>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Action Buttons Sidebar (Right Column) -->
+        </div><!-- end content-area -->
+      </div><!-- end tabs-container -->
+
+      <!-- Action Buttons Sidebar -->
       <aside class="action-sidebar">
         <div class="button-group">
           <button class="action-btn create-btn" id="create-btn">
@@ -261,7 +250,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
       </aside>
     </section>
 
-    <!-- Modals -->
+    <!-- User Modal -->
     <div id="user-modal" class="modal hidden">
       <div class="modal-content">
         <div class="modal-header">
@@ -281,29 +270,15 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
             <label for="user-email">Email</label>
             <input type="email" id="user-email" required>
           </div>
+          <!-- FIX: role options match DB enum ('user','admin') — removed 'student' -->
           <div class="form-group">
             <label for="user-role">Role</label>
             <select id="user-role" required>
               <option value="">Select Role</option>
-<<<<<<< HEAD
               <option value="user">User</option>
               <option value="admin">Admin</option>
             </select>
           </div>
-=======
-              <option value="student">Student</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="user-status">Status</label>
-            <select id="user-status" required>
-              <option value="">Select Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
->>>>>>> 4f141e866d0ffc8f4c349665264734fd4d3fdbe6
           <div class="modal-actions">
             <button type="submit" class="btn-admin btn-primary">Save</button>
             <button type="button" class="btn-admin btn-secondary modal-close-btn">Cancel</button>
@@ -312,6 +287,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
       </div>
     </div>
 
+    <!-- Confirm Modal -->
     <div id="confirm-modal" class="modal hidden">
       <div class="modal-content modal-confirm">
         <div class="modal-header">
@@ -327,10 +303,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
   </main>
 
   <script src="script.js"></script>
-<<<<<<< HEAD
   <script src="admin-dashboard.js"></script>
-=======
->>>>>>> 4f141e866d0ffc8f4c349665264734fd4d3fdbe6
 </body>
-
 </html>

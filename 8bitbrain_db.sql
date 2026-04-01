@@ -1,42 +1,203 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
--- https://www.phpmyadmin.net/
---
--- Host: 127.0.0.1
--- Generation Time: Mar 28, 2026 at 08:24 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- 8BitBrain Database - Fixed Version
+-- Drop and reimport this entire file in phpMyAdmin
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
-
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
---
+-- --------------------------------------------------------
 -- Database: `8bitbrain_db`
---
-
 -- --------------------------------------------------------
 
---
--- Table structure for table `answers`
---
+-- --------------------------------------------------------
+-- Table: users
+-- FIX: Added `status` column (was being SELECT'd but didn't exist)
+-- --------------------------------------------------------
 
-CREATE TABLE `answers` (
-  `id` int(11) NOT NULL,
-  `question_id` int(11) NOT NULL,
-  `answer_text` varchar(255) NOT NULL,
-  `is_correct` tinyint(1) DEFAULT 0
+CREATE TABLE `users` (
+  `id`           int(11)                    NOT NULL AUTO_INCREMENT,
+  `fullname`     varchar(100)               NOT NULL,
+  `email`        varchar(100)               NOT NULL,
+  `username`     varchar(50)                NOT NULL,
+  `age`          int(11)                    NOT NULL,
+  `password`     varchar(255)               NOT NULL,
+  `account_type` enum('user','admin')       DEFAULT 'user',
+  `status`       enum('active','inactive')  NOT NULL DEFAULT 'active',
+  `created_at`   timestamp                  NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email`    (`email`),
+  UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `answers`
---
+INSERT INTO `users` (`id`, `fullname`, `email`, `username`, `age`, `password`, `account_type`, `status`, `created_at`) VALUES
+(1, 'Admin',        'admin@8bitbrain.com',     'admin',  25, 'admin123',   'admin', 'active', '2026-03-13 04:51:10'),
+(2, 'Hanz Galgana', 'hanzy1galgana@gmail.com', 'Hhanzi', 19, 'Hanzy1312',  'user',  'active', '2026-03-28 04:38:01');
+
+-- --------------------------------------------------------
+-- Table: quizzes
+-- FIX: Removed `created_by` (was never in schema but PHP tried to insert it)
+-- --------------------------------------------------------
+
+CREATE TABLE `quizzes` (
+  `id`         int(11)      NOT NULL AUTO_INCREMENT,
+  `title`      varchar(255) NOT NULL,
+  `category`   varchar(100) NOT NULL,
+  `difficulty` enum('easy','medium','hard') DEFAULT 'medium',
+  `mode`       enum('single_player','timed_quiz','ranked_quiz','memory_match','endless_quiz') NOT NULL DEFAULT 'single_player',
+  `created_at` timestamp    NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `quizzes` (`id`, `title`, `category`, `difficulty`, `mode`, `created_at`) VALUES
+(41, 'Computer Hardware Fundamentals', 'Computer Hardware', 'easy',   'single_player', '2026-03-28 04:24:07'),
+(42, 'Computer Software Essentials',  'Computer Software', 'easy',   'single_player', '2026-03-28 04:24:07'),
+(43, 'Internet Basics',               'Internet',          'medium', 'single_player', '2026-03-28 04:24:07'),
+(44, 'Computer Networking',           'Network',           'medium', 'single_player', '2026-03-28 04:24:07'),
+(45, 'CyberSecurity Fundamentals',    'CyberSecurity',     'hard',   'single_player', '2026-03-28 04:24:07'),
+(46, 'Math Speed Test',               'Math',              'medium', 'timed_quiz',    '2026-03-28 05:43:20'),
+(48, 'Math Speed Test',               'Math',              'medium', 'timed_quiz',    '2026-03-28 05:49:01'),
+(49, 'Quick History Facts',           'History',           'easy',   'timed_quiz',    '2026-03-28 05:49:01'),
+(50, 'General Knowledge Ranked',      'Trivia',            'hard',   'ranked_quiz',   '2026-03-28 05:49:01'),
+(52, 'Vocabulary Memory Match',       'English',           'easy',   'memory_match',  '2026-03-28 05:49:01'),
+(54, 'Endless Science Challenge',     'Science',           'medium', 'endless_quiz',  '2026-03-28 05:49:01');
+
+-- --------------------------------------------------------
+-- Table: questions
+-- FIX: Removed `question_order` (was being inserted but didn't exist)
+-- --------------------------------------------------------
+
+CREATE TABLE `questions` (
+  `id`            int(11) NOT NULL AUTO_INCREMENT,
+  `quiz_id`       int(11) NOT NULL,
+  `question_text` text    NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `quiz_id` (`quiz_id`),
+  CONSTRAINT `questions_ibfk_1` FOREIGN KEY (`quiz_id`) REFERENCES `quizzes` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `questions` (`id`, `quiz_id`, `question_text`) VALUES
+(521, 41, 'Which computer component is responsible for executing instructions?'),
+(522, 41, 'Which of the following is an example of computer hardware?'),
+(523, 41, 'What type of software manages the hardware and allows other software to run?'),
+(524, 41, 'Which software is used to create documents, spreadsheets, or presentations?'),
+(525, 41, 'What does RAM do in a computer?'),
+(526, 42, 'What is software?'),
+(527, 42, 'Which of the following is software?'),
+(528, 42, 'What type of software controls and manages computer hardware?'),
+(529, 42, 'Which is an example of system software?'),
+(530, 42, 'What type of software helps users perform tasks such as typing, browsing, or editing photos?'),
+(531, 42, 'What does middleware do?'),
+(532, 42, 'What kind of software is used to create other software?'),
+(533, 42, 'Which of the following is an example of application software?'),
+(534, 42, 'What does an operating system do?'),
+(535, 42, 'Why is system software important?'),
+(536, 42, 'Which of the following is NOT a type of software?'),
+(537, 42, 'What type of software helps users browse the Internet or write documents?'),
+(538, 42, 'What is the role of programming software?'),
+(539, 42, 'Which software runs first when you turn on a computer?'),
+(540, 42, 'Why is software necessary in a computer?'),
+(541, 43, 'What is the Internet?'),
+(542, 43, 'Which term best describes how the Internet is organized?'),
+(543, 43, 'What allows different networks on the Internet to communicate with each other?'),
+(544, 43, 'Which protocol is fundamental to Internet communication?'),
+(545, 43, 'Which early network is considered the foundation of today\'s Internet?'),
+(546, 43, 'What is packet switching?'),
+(547, 43, 'What is a server on the Internet?'),
+(548, 43, 'What do clients do on the Internet?'),
+(549, 43, 'Which physical medium carries much of today\'s Internet traffic?'),
+(550, 43, 'What is the World Wide Web?'),
+(551, 43, 'Which of the following is NOT a use of the Internet?'),
+(552, 43, 'What makes the Internet able to grow and connect many networks?'),
+(553, 43, 'What role do Internet Service Providers (ISPs) play?'),
+(554, 43, 'Which invention made the Internet more user-friendly for the public?'),
+(555, 43, 'Why is the Internet important to modern society?'),
+(556, 44, 'What is computer networking?'),
+(557, 44, 'What is the main purpose of a network?'),
+(558, 44, 'Which of the following is an example of a networked device?'),
+(559, 44, 'What does a router do in a network?'),
+(560, 44, 'What is a LAN?'),
+(561, 44, 'What type of network connects devices across large geographic areas?'),
+(562, 44, 'What does TCP/IP do in networking?'),
+(563, 44, 'What is a server in a network?'),
+(564, 44, 'What is a client in a network?'),
+(565, 44, 'What is bandwidth?'),
+(566, 44, 'Which of these is a benefit of networking?'),
+(567, 44, 'What device connects computers inside the same network?'),
+(568, 44, 'What type of connection uses radio signals instead of cables?'),
+(569, 44, 'Why are networks important in businesses?'),
+(570, 44, 'What is one key role of networking in modern life?'),
+(571, 45, 'What is cybersecurity mainly concerned with?'),
+(572, 45, 'Which best describes a cyber threat?'),
+(573, 45, 'What is malware?'),
+(574, 45, 'Which is malware?'),
+(575, 45, 'What does ransomware do?'),
+(576, 45, 'What is phishing?'),
+(577, 45, 'Why are strong passwords important?'),
+(578, 45, 'What does encryption do?'),
+(579, 45, 'Which helps keep system secure?'),
+(580, 45, 'What is authentication?'),
+(581, 45, 'What is MFA?'),
+(582, 45, 'What is a firewall?'),
+(583, 45, 'Why be careful with email links?'),
+(584, 45, 'What is a data breach?'),
+(585, 45, 'Why is cybersecurity important?'),
+(587, 46, 'What is 25 x 4?'),
+(588, 46, 'Solve: 144 ÷ 12'),
+(589, 46, 'Square root of 64?'),
+(590, 50, 'Who painted the Mona Lisa?'),
+(591, 50, 'Which is the largest desert?'),
+(592, 50, 'What is the capital of Canada?'),
+(593, 54, 'What gas do plants release during photosynthesis?'),
+(594, 54, 'What is the center of an atom called?'),
+(595, 54, 'What planet is known as the Morning Star?'),
+(596, 52, 'Define: Osmosis'),
+(597, 52, 'Define: Algorithm'),
+(598, 52, 'Define: Ecosystem'),
+(599, 54, 'What is the chemical symbol for sodium?'),
+(600, 54, 'Which organelle is known as the powerhouse of the cell?'),
+(601, 54, 'What gas do humans exhale in large amounts?'),
+(602, 54, 'What planet has the most moons?'),
+(603, 54, 'What is the hardest natural substance on Earth?'),
+(604, 54, 'What is the speed of light in vacuum?'),
+(605, 54, 'Which planet is known as the Red Planet?'),
+(606, 54, 'What is the largest organ in the human body?'),
+(607, 54, 'Which gas is most abundant in Earth\'s atmosphere?'),
+(608, 54, 'What is the boiling point of water at sea level?'),
+(609, 54, 'Which blood cells fight infection?'),
+(610, 54, 'What is the center of our solar system?'),
+(611, 54, 'Which scientist proposed the theory of relativity?'),
+(612, 54, 'What is the chemical symbol for gold?'),
+(613, 54, 'Which layer of Earth lies beneath the crust?'),
+(614, 54, 'What is the main gas in balloons?'),
+(615, 54, 'Which vitamin is produced when skin is exposed to sunlight?'),
+(616, 54, 'What is the smallest unit of life?'),
+(617, 54, 'Which planet is the largest in our solar system?'),
+(618, 54, 'What is H2O commonly known as?'),
+(619, 54, 'Which scientist discovered gravity?'),
+(620, 54, 'What is the chemical symbol for iron?'),
+(621, 54, 'Which planet is closest to the Sun?'),
+(622, 54, 'What is the largest mammal on Earth?');
+
+-- --------------------------------------------------------
+-- Table: answers
+-- FIX: Removed `answer_index` (was being inserted but didn't exist)
+-- --------------------------------------------------------
+
+CREATE TABLE `answers` (
+  `id`          int(11)      NOT NULL AUTO_INCREMENT,
+  `question_id` int(11)      NOT NULL,
+  `answer_text` varchar(255) NOT NULL,
+  `is_correct`  tinyint(1)   DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `question_id` (`question_id`),
+  CONSTRAINT `answers_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `answers` (`id`, `question_id`, `answer_text`, `is_correct`) VALUES
 (2081, 521, 'A. Hard drive', 0),
@@ -400,393 +561,84 @@ INSERT INTO `answers` (`id`, `question_id`, `answer_text`, `is_correct`) VALUES
 (2439, 621, 'Earth', 0),
 (2440, 622, 'Blue Whale', 1),
 (2441, 622, 'Elephant', 0),
-(2442, 622, 'Giraffe', 0),
-(2443, 623, 'Na', 1),
-(2444, 623, 'So', 0),
-(2445, 623, 'Sn', 0),
-(2446, 624, 'Mitochondria', 1),
-(2447, 624, 'Nucleus', 0),
-(2448, 624, 'Ribosome', 0),
-(2449, 625, 'Carbon Dioxide', 1),
-(2450, 625, 'Oxygen', 0),
-(2451, 625, 'Nitrogen', 0),
-(2452, 626, 'Saturn', 1),
-(2453, 626, 'Jupiter', 0),
-(2454, 626, 'Mars', 0),
-(2455, 627, 'Diamond', 1),
-(2456, 627, 'Quartz', 0),
-(2457, 627, 'Steel', 0),
-(2458, 628, '299,792 km/s', 1),
-(2459, 628, '150,000 km/s', 0),
-(2460, 628, '1,000 km/s', 0),
-(2461, 629, 'Mars', 1),
-(2462, 629, 'Venus', 0),
-(2463, 629, 'Mercury', 0),
-(2464, 630, 'Skin', 1),
-(2465, 630, 'Liver', 0),
-(2466, 630, 'Heart', 0),
-(2467, 631, 'Nitrogen', 1),
-(2468, 631, 'Oxygen', 0),
-(2469, 631, 'Carbon Dioxide', 0),
-(2470, 632, '100°C', 1),
-(2471, 632, '90°C', 0),
-(2472, 632, '110°C', 0),
-(2473, 633, 'White blood cells', 1),
-(2474, 633, 'Red blood cells', 0),
-(2475, 633, 'Platelets', 0),
-(2476, 634, 'The Sun', 1),
-(2477, 634, 'Earth', 0),
-(2478, 634, 'Jupiter', 0),
-(2479, 635, 'Albert Einstein', 1),
-(2480, 635, 'Isaac Newton', 0),
-(2481, 635, 'Galileo Galilei', 0),
-(2482, 636, 'Au', 1),
-(2483, 636, 'Ag', 0),
-(2484, 636, 'Gd', 0),
-(2485, 637, 'Mantle', 1),
-(2486, 637, 'Core', 0),
-(2487, 637, 'Lithosphere', 0),
-(2488, 638, 'Helium', 1),
-(2489, 638, 'Hydrogen', 0),
-(2490, 638, 'Oxygen', 0),
-(2491, 639, 'Vitamin D', 1),
-(2492, 639, 'Vitamin C', 0),
-(2493, 639, 'Vitamin B12', 0),
-(2494, 640, 'Cell', 1),
-(2495, 640, 'Atom', 0),
-(2496, 640, 'Molecule', 0),
-(2497, 641, 'Jupiter', 1),
-(2498, 641, 'Saturn', 0),
-(2499, 641, 'Neptune', 0),
-(2500, 642, 'Water', 1),
-(2501, 642, 'Hydrogen', 0),
-(2502, 642, 'Oxygen', 0),
-(2503, 643, 'Isaac Newton', 1),
-(2504, 643, 'Albert Einstein', 0),
-(2505, 643, 'Galileo Galilei', 0),
-(2506, 644, 'Fe', 1),
-(2507, 644, 'Ir', 0),
-(2508, 644, 'In', 0),
-(2509, 645, 'Mercury', 1),
-(2510, 645, 'Venus', 0),
-(2511, 645, 'Earth', 0),
-(2512, 646, 'Blue Whale', 1),
-(2513, 646, 'Elephant', 0),
-(2514, 646, 'Giraffe', 0);
+(2442, 622, 'Giraffe', 0);
 
 -- --------------------------------------------------------
-
---
--- Table structure for table `leaderboard`
---
+-- Table: leaderboard
+-- --------------------------------------------------------
 
 CREATE TABLE `leaderboard` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `username` varchar(50) NOT NULL,
-  `fullname` varchar(100) NOT NULL,
-  `mode` varchar(50) NOT NULL,
-  `score` int(11) NOT NULL DEFAULT 0,
-  `correct` int(11) DEFAULT NULL,
-  `total` int(11) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `id`         int(11)      NOT NULL AUTO_INCREMENT,
+  `user_id`    int(11)      NOT NULL,
+  `username`   varchar(50)  NOT NULL,
+  `fullname`   varchar(100) NOT NULL,
+  `mode`       varchar(50)  NOT NULL,
+  `score`      int(11)      NOT NULL DEFAULT 0,
+  `correct`    int(11)      DEFAULT NULL,
+  `total`      int(11)      DEFAULT NULL,
+  `created_at` timestamp    NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `leaderboard_user_fk`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
-
---
--- Table structure for table `questions`
---
-
-CREATE TABLE `questions` (
-  `id` int(11) NOT NULL,
-  `quiz_id` int(11) NOT NULL,
-  `question_text` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `questions`
---
-
-INSERT INTO `questions` (`id`, `quiz_id`, `question_text`) VALUES
-(521, 41, 'Which computer component is responsible for executing instructions?'),
-(522, 41, 'Which of the following is an example of computer hardware?'),
-(523, 41, 'What type of software manages the hardware and allows other software to run?'),
-(524, 41, 'Which software is used to create documents, spreadsheets, or presentations?'),
-(525, 41, 'What does RAM do in a computer?'),
-(526, 42, 'What is software?'),
-(527, 42, 'Which of the following is software?'),
-(528, 42, 'What type of software controls and manages computer hardware?'),
-(529, 42, 'Which is an example of system software?'),
-(530, 42, 'What type of software helps users perform tasks such as typing, browsing, or editing photos?'),
-(531, 42, 'What does middleware do?'),
-(532, 42, 'What kind of software is used to create other software?'),
-(533, 42, 'Which of the following is an example of application software?'),
-(534, 42, 'What does an operating system do?'),
-(535, 42, 'Why is system software important?'),
-(536, 42, 'Which of the following is NOT a type of software?'),
-(537, 42, 'What type of software helps users browse the Internet or write documents?'),
-(538, 42, 'What is the role of programming software?'),
-(539, 42, 'Which software runs first when you turn on a computer?'),
-(540, 42, 'Why is software necessary in a computer?'),
-(541, 43, 'What is the Internet?'),
-(542, 43, 'Which term best describes how the Internet is organized?'),
-(543, 43, 'What allows different networks on the Internet to communicate with each other?'),
-(544, 43, 'Which protocol is fundamental to Internet communication?'),
-(545, 43, 'Which early network is considered the foundation of today\'s Internet?'),
-(546, 43, 'What is packet switching?'),
-(547, 43, 'What is a server on the Internet?'),
-(548, 43, 'What do clients do on the Internet?'),
-(549, 43, 'Which physical medium carries much of today\'s Internet traffic?'),
-(550, 43, 'What is the World Wide Web?'),
-(551, 43, 'Which of the following is NOT a use of the Internet?'),
-(552, 43, 'What makes the Internet able to grow and connect many networks?'),
-(553, 43, 'What role do Internet Service Providers (ISPs) play?'),
-(554, 43, 'Which invention made the Internet more user-friendly for the public?'),
-(555, 43, 'Why is the Internet important to modern society?'),
-(556, 44, 'What is computer networking?'),
-(557, 44, 'What is the main purpose of a network?'),
-(558, 44, 'Which of the following is an example of a networked device?'),
-(559, 44, 'What does a router do in a network?'),
-(560, 44, 'What is a LAN?'),
-(561, 44, 'What type of network connects devices across large geographic areas?'),
-(562, 44, 'What does TCP/IP do in networking?'),
-(563, 44, 'What is a server in a network?'),
-(564, 44, 'What is a client in a network?'),
-(565, 44, 'What is bandwidth?'),
-(566, 44, 'Which of these is a benefit of networking?'),
-(567, 44, 'What device connects computers inside the same network?'),
-(568, 44, 'What type of connection uses radio signals instead of cables?'),
-(569, 44, 'Why are networks important in businesses?'),
-(570, 44, 'What is one key role of networking in modern life?'),
-(571, 45, 'What is cybersecurity mainly concerned with?'),
-(572, 45, 'Which best describes a cyber threat?'),
-(573, 45, 'What is malware?'),
-(574, 45, 'Which is malware?'),
-(575, 45, 'What does ransomware do?'),
-(576, 45, 'What is phishing?'),
-(577, 45, 'Why are strong passwords important?'),
-(578, 45, 'What does encryption do?'),
-(579, 45, 'Which helps keep system secure?'),
-(580, 45, 'What is authentication?'),
-(581, 45, 'What is MFA?'),
-(582, 45, 'What is a firewall?'),
-(583, 45, 'Why be careful with email links?'),
-(584, 45, 'What is a data breach?'),
-(585, 45, 'Why is cybersecurity important?'),
-(586, 46, 'What is 25 x 4?'),
-(587, 46, 'What is 25 x 4?'),
-(588, 46, 'Solve: 144 ÷ 12'),
-(589, 46, 'Square root of 64?'),
-(590, 50, 'Who painted the Mona Lisa?'),
-(591, 50, 'Which is the largest desert?'),
-(592, 50, 'What is the capital of Canada?'),
-(593, 54, 'What gas do plants release during photosynthesis?'),
-(594, 54, 'What is the center of an atom called?'),
-(595, 54, 'What planet is known as the Morning Star?'),
-(596, 52, 'Define: Osmosis'),
-(597, 52, 'Define: Algorithm'),
-(598, 52, 'Define: Ecosystem'),
-(599, 54, 'What is the chemical symbol for sodium?'),
-(600, 54, 'Which organelle is known as the powerhouse of the cell?'),
-(601, 54, 'What gas do humans exhale in large amounts?'),
-(602, 54, 'What planet has the most moons?'),
-(603, 54, 'What is the hardest natural substance on Earth?'),
-(604, 54, 'What is the speed of light in vacuum?'),
-(605, 54, 'Which planet is known as the Red Planet?'),
-(606, 54, 'What is the largest organ in the human body?'),
-(607, 54, 'Which gas is most abundant in Earth’s atmosphere?'),
-(608, 54, 'What is the boiling point of water at sea level?'),
-(609, 54, 'Which blood cells fight infection?'),
-(610, 54, 'What is the center of our solar system?'),
-(611, 54, 'Which scientist proposed the theory of relativity?'),
-(612, 54, 'What is the chemical symbol for gold?'),
-(613, 54, 'Which layer of Earth lies beneath the crust?'),
-(614, 54, 'What is the main gas in balloons?'),
-(615, 54, 'Which vitamin is produced when skin is exposed to sunlight?'),
-(616, 54, 'What is the smallest unit of life?'),
-(617, 54, 'Which planet is the largest in our solar system?'),
-(618, 54, 'What is H2O commonly known as?'),
-(619, 54, 'Which scientist discovered gravity?'),
-(620, 54, 'What is the chemical symbol for iron?'),
-(621, 54, 'Which planet is closest to the Sun?'),
-(622, 54, 'What is the largest mammal on Earth?'),
-(623, 54, 'What is the chemical symbol for sodium?'),
-(624, 54, 'Which organelle is known as the powerhouse of the cell?'),
-(625, 54, 'What gas do humans exhale in large amounts?'),
-(626, 54, 'What planet has the most moons?'),
-(627, 54, 'What is the hardest natural substance on Earth?'),
-(628, 54, 'What is the speed of light in vacuum?'),
-(629, 54, 'Which planet is known as the Red Planet?'),
-(630, 54, 'What is the largest organ in the human body?'),
-(631, 54, 'Which gas is most abundant in Earth’s atmosphere?'),
-(632, 54, 'What is the boiling point of water at sea level?'),
-(633, 54, 'Which blood cells fight infection?'),
-(634, 54, 'What is the center of our solar system?'),
-(635, 54, 'Which scientist proposed the theory of relativity?'),
-(636, 54, 'What is the chemical symbol for gold?'),
-(637, 54, 'Which layer of Earth lies beneath the crust?'),
-(638, 54, 'What is the main gas in balloons?'),
-(639, 54, 'Which vitamin is produced when skin is exposed to sunlight?'),
-(640, 54, 'What is the smallest unit of life?'),
-(641, 54, 'Which planet is the largest in our solar system?'),
-(642, 54, 'What is H2O commonly known as?'),
-(643, 54, 'Which scientist discovered gravity?'),
-(644, 54, 'What is the chemical symbol for iron?'),
-(645, 54, 'Which planet is closest to the Sun?'),
-(646, 54, 'What is the largest mammal on Earth?');
-
+-- Table: feedback
+-- FIX: Was missing entirely from original dump
 -- --------------------------------------------------------
 
---
--- Table structure for table `quizzes`
---
-
-CREATE TABLE `quizzes` (
-  `id` int(11) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `category` varchar(100) NOT NULL,
-  `difficulty` enum('easy','medium','hard') DEFAULT 'medium',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `mode` enum('single_player','timed_quiz','ranked_quiz','memory_match','endless_quiz') NOT NULL DEFAULT 'single_player'
+CREATE TABLE `feedback` (
+  `id`            int(11)                     NOT NULL AUTO_INCREMENT,
+  `user_id`       int(11)                     DEFAULT NULL,
+  `quiz_id`       int(11)                     DEFAULT NULL,
+  `feedback_text` text                        NOT NULL,
+  `rating`        tinyint(1)                  DEFAULT NULL,
+  `status`        enum('pending','resolved')  NOT NULL DEFAULT 'pending',
+  `created_at`    timestamp                   NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `quiz_id`  (`quiz_id`),
+  CONSTRAINT `fb_user_fk`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fb_quiz_fk`
+    FOREIGN KEY (`quiz_id`) REFERENCES `quizzes` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `quizzes`
---
-
-INSERT INTO `quizzes` (`id`, `title`, `category`, `difficulty`, `created_at`, `mode`) VALUES
-(41, 'Computer Hardware Fundamentals', 'Computer Hardware', 'easy', '2026-03-28 04:24:07', 'single_player'),
-(42, 'Computer Software Essentials', 'Computer Software', 'easy', '2026-03-28 04:24:07', 'single_player'),
-(43, 'Internet Basics', 'Internet', 'medium', '2026-03-28 04:24:07', 'single_player'),
-(44, 'Computer Networking', 'Network', 'medium', '2026-03-28 04:24:07', 'single_player'),
-(45, 'CyberSecurity Fundamentals', 'CyberSecurity', 'hard', '2026-03-28 04:24:07', 'single_player'),
-(46, 'Math Speed Test', 'Math', 'medium', '2026-03-28 05:43:20', 'timed_quiz'),
-(48, 'Math Speed Test', 'Math', 'medium', '2026-03-28 05:49:01', 'timed_quiz'),
-(49, 'Quick History Facts', 'History', 'easy', '2026-03-28 05:49:01', 'timed_quiz'),
-(50, 'General Knowledge Ranked', 'Trivia', 'hard', '2026-03-28 05:49:01', 'ranked_quiz'),
-(52, 'Vocabulary Memory Match', 'English', 'easy', '2026-03-28 05:49:01', 'memory_match'),
-(54, 'Endless Science Challenge', 'Science', 'medium', '2026-03-28 05:49:01', 'endless_quiz');
 
 -- --------------------------------------------------------
+-- Table: quiz_references
+-- FIX: Was missing entirely from original dump
+-- --------------------------------------------------------
 
---
--- Table structure for table `users`
---
-
-CREATE TABLE `users` (
-  `id` int(11) NOT NULL,
-  `fullname` varchar(100) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `username` varchar(50) NOT NULL,
-  `age` int(11) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `account_type` enum('user','admin') DEFAULT 'user',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+CREATE TABLE `quiz_references` (
+  `id`             int(11)      NOT NULL AUTO_INCREMENT,
+  `quiz_id`        int(11)      NOT NULL,
+  `question_id`    int(11)      DEFAULT NULL,
+  `reference_text` text         DEFAULT NULL,
+  `reference_url`  varchar(500) DEFAULT NULL,
+  `reference_type` varchar(50)  NOT NULL DEFAULT 'url',
+  `created_at`     timestamp    NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `quiz_id`     (`quiz_id`),
+  KEY `question_id` (`question_id`),
+  CONSTRAINT `qr_quiz_fk`
+    FOREIGN KEY (`quiz_id`)     REFERENCES `quizzes`   (`id`) ON DELETE CASCADE,
+  CONSTRAINT `qr_question_fk`
+    FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `users`
---
+-- --------------------------------------------------------
+-- AUTO_INCREMENT values
+-- --------------------------------------------------------
 
-INSERT INTO `users` (`id`, `fullname`, `email`, `username`, `age`, `password`, `account_type`, `created_at`) VALUES
-(1, 'Admin', 'admin@8bitbrain.com', 'admin', 25, 'admin123', 'admin', '2026-03-13 04:51:10'),
-(2, 'Hanz Galgana', 'hanzy1galgana@gmail.com', 'Hhanzi', 19, 'Hanzy1312', 'user', '2026-03-28 04:38:01');
+ALTER TABLE `users`           MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+ALTER TABLE `quizzes`         MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+ALTER TABLE `questions`       MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=647;
+ALTER TABLE `answers`         MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2515;
+ALTER TABLE `leaderboard`     MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+ALTER TABLE `feedback`        MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+ALTER TABLE `quiz_references` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `answers`
---
-ALTER TABLE `answers`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `question_id` (`question_id`);
-
---
--- Indexes for table `leaderboard`
---
-ALTER TABLE `leaderboard`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`);
-
---
--- Indexes for table `questions`
---
-ALTER TABLE `questions`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `quiz_id` (`quiz_id`);
-
---
--- Indexes for table `quizzes`
---
-ALTER TABLE `quizzes`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `users`
---
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`),
-  ADD UNIQUE KEY `username` (`username`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `answers`
---
-ALTER TABLE `answers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2515;
-
---
--- AUTO_INCREMENT for table `leaderboard`
---
-ALTER TABLE `leaderboard`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
-
---
--- AUTO_INCREMENT for table `questions`
---
-ALTER TABLE `questions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=647;
-
---
--- AUTO_INCREMENT for table `quizzes`
---
-ALTER TABLE `quizzes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
-
---
--- AUTO_INCREMENT for table `users`
---
-ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `answers`
---
-ALTER TABLE `answers`
-  ADD CONSTRAINT `answers_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `leaderboard`
---
-ALTER TABLE `leaderboard`
-  ADD CONSTRAINT `leaderboard_user_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `questions`
---
-ALTER TABLE `questions`
-  ADD CONSTRAINT `questions_ibfk_1` FOREIGN KEY (`quiz_id`) REFERENCES `quizzes` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

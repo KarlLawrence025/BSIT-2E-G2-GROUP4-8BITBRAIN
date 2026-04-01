@@ -6,93 +6,132 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 require_once '../db.php';
 
-// Get POST data
 $data = json_decode(file_get_contents("php://input"), true);
 
-// Validate required fields
+// ── Validate required fields ──────────────────────────────────────────────────
 if (!isset($data['title']) || !isset($data['category']) || !isset($data['difficulty'])) {
     echo json_encode([
         'success' => false,
-        'message' => 'Missing required fields (title, category, difficulty)'
+        'message' => 'Missing required fields: title, category, difficulty'
     ]);
     exit;
 }
 
-$title = $conn->real_escape_string($data['title']);
-$category = $conn->real_escape_string($data['category']);
-$difficulty = $conn->real_escape_string($data['difficulty']);
-$created_by = isset($data['created_by']) ? intval($data['created_by']) : 1; // Default to admin (ID 1)
-$reference_url = isset($data['reference_url']) && !empty($data['reference_url']) ? $conn->real_escape_string($data['reference_url']) : null;
+// ── Sanitise inputs ───────────────────────────────────────────────────────────
+$title      = $conn->real_escape_string(trim($data['title']));
+$category   = $conn->real_escape_string(trim($data['category']));
+$difficulty = $conn->real_escape_string(trim($data['difficulty']));
 
-// Start transaction
+// Validate difficulty against enum
+$allowed_difficulties = ['easy', 'medium', 'hard'];
+if (!in_array($difficulty, $allowed_difficulties)) {
+    $difficulty = 'medium';
+}
+
+// Validate and default mode
+$allowed_modes = ['single_player', 'timed_quiz', 'ranked_quiz', 'memory_match', 'endless_quiz'];
+$mode = isset($data['mode']) ? $conn->real_escape_string(trim($data['mode'])) : 'single_player';
+if (!in_array($mode, $allowed_modes)) {
+    $mode = 'single_player';
+}
+
+$reference_url = (isset($data['reference_url']) && !empty(trim($data['reference_url'])))
+    ? $conn->real_escape_string(trim($data['reference_url']))
+    : null;
+
+$questions = isset($data['questions']) && is_array($data['questions']) ? $data['questions'] : [];
+
+// ── Validate at least one question ───────────────────────────────────────────
+if (count($questions) === 0) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Please add at least one question before creating the quiz.'
+    ]);
+    exit;
+}
+
+// ── Begin transaction ─────────────────────────────────────────────────────────
 $conn->begin_transaction();
 
 try {
-    // Insert quiz
-    $sql = "INSERT INTO quizzes (title, category, difficulty, created_by) 
-            VALUES ('$title', '$category', '$difficulty', $created_by)";
-    
-    if (!$conn->query($sql)) {
-        throw new Exception("Error creating quiz: " . $conn->error);
+
+    // 1. Insert quiz — only columns that exist in the schema
+    $stmt = $conn->prepare(
+        "INSERT INTO quizzes (title, category, difficulty, mode) VALUES (?, ?, ?, ?)"
+    );
+    $stmt->bind_param("ssss", $title, $category, $difficulty, $mode);
+    if (!$stmt->execute()) {
+        throw new Exception("Error creating quiz: " . $stmt->error);
     }
-    
     $quiz_id = $conn->insert_id;
-    
-    // Insert reference link if provided
+    $stmt->close();
+
+    // 2. Insert reference link if provided (table may not exist yet — handle gracefully)
     if ($reference_url !== null) {
-        $ref_sql = "INSERT INTO quiz_references (quiz_id, reference_url, reference_type) 
-                    VALUES ($quiz_id, '$reference_url', 'url')";
-        
-        if (!$conn->query($ref_sql)) {
-            throw new Exception("Error saving reference: " . $conn->error);
+        $ref_check = $conn->query("SHOW TABLES LIKE 'quiz_references'");
+        if ($ref_check && $ref_check->num_rows > 0) {
+            $ref_stmt = $conn->prepare(
+                "INSERT INTO quiz_references (quiz_id, reference_url, reference_type) VALUES (?, ?, 'url')"
+            );
+            $ref_stmt->bind_param("is", $quiz_id, $reference_url);
+            if (!$ref_stmt->execute()) {
+                throw new Exception("Error saving reference: " . $ref_stmt->error);
+            }
+            $ref_stmt->close();
+        }
+        // If table doesn't exist, skip silently — quiz still saves
+    }
+
+    // 3. Insert questions and answers
+    $q_stmt = $conn->prepare(
+        "INSERT INTO questions (quiz_id, question_text) VALUES (?, ?)"
+    );
+    $a_stmt = $conn->prepare(
+        "INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, ?)"
+    );
+
+    foreach ($questions as $question) {
+        $q_text = $conn->real_escape_string(trim($question['text'] ?? ''));
+
+        if (empty($q_text)) continue; // skip blank questions
+
+        $q_stmt->bind_param("is", $quiz_id, $q_text);
+        if (!$q_stmt->execute()) {
+            throw new Exception("Error creating question: " . $q_stmt->error);
+        }
+        $question_id = $conn->insert_id;
+
+        $options       = $question['options']      ?? [];
+        $correct_index = isset($question['correctAnswer']) ? intval($question['correctAnswer']) : -1;
+
+        foreach ($options as $opt_index => $option) {
+            $a_text     = $conn->real_escape_string(trim($option['text'] ?? ''));
+            $is_correct = ($opt_index === $correct_index) ? 1 : 0;
+
+            if (empty($a_text)) continue; // skip blank options
+
+            $a_stmt->bind_param("isi", $question_id, $a_text, $is_correct);
+            if (!$a_stmt->execute()) {
+                throw new Exception("Error creating answer: " . $a_stmt->error);
+            }
         }
     }
-    
-    // Insert questions if provided
-    if (isset($data['questions']) && is_array($data['questions'])) {
-        foreach ($data['questions'] as $index => $question) {
-            $question_text = $conn->real_escape_string($question['text']);
-            $question_order = $index + 1;
-            
-            $q_sql = "INSERT INTO questions (quiz_id, question_text, question_order) 
-                      VALUES ($quiz_id, '$question_text', $question_order)";
-            
-            if (!$conn->query($q_sql)) {
-                throw new Exception("Error creating question: " . $conn->error);
-            }
-            
-            $question_id = $conn->insert_id;
-            
-            // Insert answers if provided
-            if (isset($question['options']) && is_array($question['options'])) {
-                foreach ($question['options'] as $opt_index => $option) {
-                    $answer_text = $conn->real_escape_string($option['text']);
-                    $is_correct = ($opt_index == $question['correctAnswer']) ? 1 : 0;
-                    
-                    $a_sql = "INSERT INTO answers (question_id, answer_text, is_correct, answer_index) 
-                              VALUES ($question_id, '$answer_text', $is_correct, $opt_index)";
-                    
-                    if (!$conn->query($a_sql)) {
-                        throw new Exception("Error creating answer: " . $conn->error);
-                    }
-                }
-            }
-        }
-    }
-    
-    // Commit transaction
+
+    $q_stmt->close();
+    $a_stmt->close();
+
     $conn->commit();
-    
+
     echo json_encode([
-        'success' => true,
-        'message' => 'Quiz created successfully',
-        'quiz_id' => $quiz_id
+        'success'  => true,
+        'message'  => 'Quiz created successfully!',
+        'quiz_id'  => $quiz_id,
+        'mode'     => $mode,
+        'questions'=> count($questions)
     ]);
-    
+
 } catch (Exception $e) {
-    // Rollback on error
     $conn->rollback();
-    
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()

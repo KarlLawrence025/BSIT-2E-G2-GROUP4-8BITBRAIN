@@ -2,15 +2,15 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-require_once 'db.php';
+require_once '../db.php';
 
-// Get all users from database
-$sql = "SELECT id, fullname, email, username, age, account_type, status, created_at FROM users ORDER BY created_at DESC";
+// Get all users from database (removed 'status' - column does not exist in schema)
+$sql = "SELECT id, fullname, email, username, age, account_type, created_at FROM users ORDER BY created_at DESC";
 $result = $conn->query($sql);
 
 $users = array();
 
-if ($result->num_rows > 0) {
+if ($result && $result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
         $users[] = $row;
     }
