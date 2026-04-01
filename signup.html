@@ -21,12 +21,12 @@
       </a>
 
       <nav class="navbar">
-        <a href="index.html">Home</a>
-        <a href="about.html">About</a>
-        <a href="modes.html">Game Modes</a>
-        <a href="contacts.html">Contact</a>
-        <a href="leaderboards.html">Leaderboards</a>
-        <a href="login.html"><button class="btn-login">Login</button></a>
+        <a href="index.php">Home</a>
+        <a href="about.php">About</a>
+        <a href="modes.php">Game Modes</a>
+        <a href="contacts.php">Contact</a>
+        <a href="leaderboards.php">Leaderboards</a>
+        <a href="login.php"><button class="btn-login">Login</button></a>
       </nav>
     </header>
 
@@ -40,9 +40,7 @@
             <button class="account-type-btn active" data-type="user">
               Regular User
             </button>
-            <button class="account-type-btn" data-type="admin">
-              Admin
-            </button>
+            <button class="account-type-btn" data-type="admin">Admin</button>
           </div>
 
           <form id="signupForm" class="login-form">
@@ -118,16 +116,20 @@
 
             <div class="form-group checkbox-group">
               <input type="checkbox" id="terms" name="terms" required />
-              <label for="terms">I agree to the <a href="#" class="terms-link">Terms & Conditions</a></label>
+              <label for="terms"
+                >I agree to the
+                <a href="#" class="terms-link">Terms & Conditions</a></label
+              >
             </div>
 
-            <button type="submit" class="btn-submit">
-              Create Account
-            </button>
+            <button type="submit" class="btn-submit">Create Account</button>
           </form>
 
           <div class="login-footer">
-            <p>Already have an account? <a href="login.html" class="signup-link">Login here</a></p>
+            <p>
+              Already have an account?
+              <a href="login.html" class="signup-link">Login here</a>
+            </p>
           </div>
         </div>
       </section>

@@ -1,9 +1,17 @@
+<?php
+session_start();
+if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'admin') {
+    header("Location: index.php");
+    exit();
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>8BitBrain</title>
+
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="imgs/Sans_Favi.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -12,22 +20,17 @@
       href="https://fonts.googleapis.com/css2?family=Bitcount+Single:wght@100..900&display=swap"
       rel="stylesheet"
     />
-</head>
+  </head>
 
-<body>
-  <header class="header">
-      <a href="index.html" class="logo"
-        >8BitBrain
+  <body>
+    <div class="bg"></div>
+
+    <header class="header">
+      <a href="index.php" class="logo">
+        8BitBrain
         <img src="imgs/Sans_Favi.png" alt="logo" class="logoimg" />
       </a>
-
-      <nav class="navbar">
-        <a href="index.html" class="active">Home</a>
-        <a href="about.html">About</a>
-        <a href="modes.html">Game Modes</a>
-        <a href="contacts.html">Contact</a>
-        <a href="leaderboards.html">Leaderboards</a>
-      </nav>
+      <?php include("navbar.php"); ?>
     </header>
 
   <!-- Main Content -->

@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("selectedMode", randomMode);
 
     // Redirect to quiz selection/game page
-    window.location.href = "quiz.html"; // adjust to your quiz page
+    window.location.href = "quiz.php"; // adjust to your quiz page
   });
 });
 
@@ -36,27 +36,27 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("timed-btn").addEventListener("click", () => {
     localStorage.setItem("selectedMode", "timed_quiz");
-    window.location.href = "quiz.html";
+    window.location.href = "quiz.php";
   });
 
   document.getElementById("ranked-btn").addEventListener("click", () => {
     localStorage.setItem("selectedMode", "ranked_quiz");
-    window.location.href = "quiz.html";
+    window.location.href = "quiz.php";
   });
 
   document.getElementById("memory-btn").addEventListener("click", () => {
     localStorage.setItem("selectedMode", "memory_match");
-    window.location.href = "quiz.html";
+    window.location.href = "quiz.php";
   });
 
   document.getElementById("endless-btn").addEventListener("click", () => {
     localStorage.setItem("selectedMode", "endless_quiz");
-    window.location.href = "quiz.html";
+    window.location.href = "quiz.php";
   });
 
   document.getElementById("single-btn").addEventListener("click", () => {
     localStorage.setItem("selectedMode", "single_player");
-    window.location.href = "quiz.html";
+    window.location.href = "quiz.php";
   });
 });
 
@@ -254,10 +254,10 @@ if (document.getElementById("loginForm")) {
         // Redirect based on account type
         if (user.account_type === "admin") {
           alert(`✅ Admin Login Successful!\nWelcome, ${user.fullname}!`);
-          window.location.href = "dashboard-admin.html";
+          window.location.href = "dashboard-admin.php";
         } else {
           alert(`✅ Login Successful!\nWelcome, ${user.fullname}!`);
-          window.location.href = "dashboard-user.html";
+          window.location.href = "dashboard-user.php";
         }
       } else {
         alert("❌ Login Failed: " + result.message);
@@ -407,7 +407,7 @@ if (document.getElementById("signupForm")) {
 
         // Redirect to login page
         setTimeout(() => {
-          window.location.href = "login.html";
+          window.location.href = "login.php";
         }, 1000);
       } else {
         alert("Error creating account: " + result.message);

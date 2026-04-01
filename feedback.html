@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -21,16 +21,16 @@
           <span class="logo-text">8BitBrain</span>
         </div>
         <ul class="nav-menu">
-          <li><a href="index.html">Home</a></li>
-          <li><a href="about.html">About</a></li>
-          <li><a href="modes.html">Game Modes</a></li>
-          <li><a href="contacts.html">Contact</a></li>
-          <li><a href="leaderboards.html">Leaderboards</a></li>
-          <li><a href="feedback.html" class="active">Feedback</a></li>
+          <li><a href="index.php">Home</a></li>
+          <li><a href="about.php">About</a></li>
+          <li><a href="modes.php">Game Modes</a></li>
+          <li><a href="contacts.php">Contact</a></li>
+          <li><a href="leaderboards.php">Leaderboards</a></li>
+          <li><a href="feedback.php" class="active">Feedback</a></li>
         </ul>
         <div class="nav-buttons">
-          <a href="login.html" class="btn-login">Login</a>
-          <a href="signup.html" class="btn-signup">Sign Up</a>
+          <a href="login.php" class="btn-login">Login</a>
+          <a href="signup.php" class="btn-signup">Sign Up</a>
         </div>
       </div>
     </nav>
@@ -40,7 +40,10 @@
         <div class="container">
           <div class="feedback-header">
             <h1>📝 Submit Feedback</h1>
-            <p>Help us improve 8BitBrain! Share your thoughts, suggestions, or report issues.</p>
+            <p>
+              Help us improve 8BitBrain! Share your thoughts, suggestions, or
+              report issues.
+            </p>
           </div>
 
           <div class="feedback-container">
@@ -103,9 +106,7 @@
                 ></textarea>
               </div>
 
-              <button type="submit" class="btn-submit">
-                Submit Feedback
-              </button>
+              <button type="submit" class="btn-submit">Submit Feedback</button>
             </form>
 
             <div class="feedback-info">
@@ -125,74 +126,85 @@
     <script src="script.js"></script>
     <script>
       // Feedback form handler
-      if (document.getElementById('feedback-form')) {
-        const feedbackForm = document.getElementById('feedback-form');
-        
-        feedbackForm.addEventListener('submit', async (e) => {
+      if (document.getElementById("feedback-form")) {
+        const feedbackForm = document.getElementById("feedback-form");
+
+        feedbackForm.addEventListener("submit", async (e) => {
           e.preventDefault();
 
           // Get rating
-          const ratingInputs = document.querySelectorAll('input[name="rating"]');
+          const ratingInputs = document.querySelectorAll(
+            'input[name="rating"]',
+          );
           let rating = null;
-          ratingInputs.forEach(input => {
+          ratingInputs.forEach((input) => {
             if (input.checked) rating = parseInt(input.value);
           });
 
           // Prepare feedback data
           const feedbackData = {
-            name: document.getElementById('feedback-name').value,
-            email: document.getElementById('feedback-email').value,
-            feedback_type: document.getElementById('feedback-type').value,
+            name: document.getElementById("feedback-name").value,
+            email: document.getElementById("feedback-email").value,
+            feedback_type: document.getElementById("feedback-type").value,
             rating: rating,
-            message: document.getElementById('feedback-message').value,
-            user_id: null // Not logged in, set to null
+            message: document.getElementById("feedback-message").value,
+            user_id: null, // Not logged in, set to null
           };
 
           try {
-            const response = await fetch('api/submit_feedback.php', {
-              method: 'POST',
+            const response = await fetch("api/submit_feedback.php", {
+              method: "POST",
               headers: {
-                'Content-Type': 'application/json'
+                "Content-Type": "application/json",
               },
-              body: JSON.stringify(feedbackData)
+              body: JSON.stringify(feedbackData),
             });
 
             const result = await response.json();
 
             if (result.success) {
-              alert('✅ Thank you for your feedback!\n\nWe appreciate your input and will review it soon.\n\nYou should receive a confirmation email shortly.');
+              alert(
+                "✅ Thank you for your feedback!\n\nWe appreciate your input and will review it soon.\n\nYou should receive a confirmation email shortly.",
+              );
               feedbackForm.reset();
             } else {
-              alert('❌ Error submitting feedback: ' + result.message);
+              alert("❌ Error submitting feedback: " + result.message);
             }
           } catch (error) {
-            console.error('Feedback error:', error);
-            alert('Network error. Please make sure XAMPP Apache is running and try again.');
+            console.error("Feedback error:", error);
+            alert(
+              "Network error. Please make sure XAMPP Apache is running and try again.",
+            );
           }
         });
 
         // Star rating hover effect
-        const stars = document.querySelectorAll('.star');
+        const stars = document.querySelectorAll(".star");
         stars.forEach((star, index) => {
-          star.addEventListener('mouseenter', () => {
+          star.addEventListener("mouseenter", () => {
             stars.forEach((s, i) => {
               if (i >= index) {
-                s.style.color = '#fbbf24';
+                s.style.color = "#fbbf24";
               } else {
-                s.style.color = '#4b5563';
+                s.style.color = "#4b5563";
               }
             });
           });
         });
 
-        const ratingContainer = document.querySelector('.rating-container');
-        ratingContainer.addEventListener('mouseleave', () => {
-          const checked = document.querySelector('input[name="rating"]:checked');
+        const ratingContainer = document.querySelector(".rating-container");
+        ratingContainer.addEventListener("mouseleave", () => {
+          const checked = document.querySelector(
+            'input[name="rating"]:checked',
+          );
           stars.forEach((s, i) => {
-            if (checked && i >= Array.from(stars).indexOf(checked.previousElementSibling)) {
-              s.style.color = '#fbbf24';
+            if (
+              checked &&
+              i >= Array.from(stars).indexOf(checked.previousElementSibling)
+            ) {
+              s.style.color = "#fbbf24";
             } else {
-              s.style.color = '#4b5563';
+              s.style.color = "#4b5563";
             }
           });
         });

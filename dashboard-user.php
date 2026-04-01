@@ -1,3 +1,10 @@
+<?php
+session_start();
+if (!isset($_SESSION['logged_in']) || $_SESSION['account_type'] !== 'user') {
+    header("Location: index.php");
+    exit();
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -16,19 +23,11 @@
   </head>
   <body>
     <header class="header">
-      <a href="index.html" class="logo"
-        >8BitBrain
+      <a href="index.php" class="logo">
+        8BitBrain
         <img src="imgs/Sans_Favi.png" alt="logo" class="logoimg" />
       </a>
-
-      <nav class="navbar">
-        <a href="index.html">Home</a>
-        <a href="about.html">About</a>
-        <a href="modes.html">Game Modes</a>
-        <a href="contacts.html">Contact</a>
-        <a href="leaderboards.html">Leaderboards</a>
-        <a href="dashboard-user.html" class="active">Dashboard</a>
-      </nav>
+      <?php include("navbar.php"); ?>
     </header>
     <main>
       <!-- Dashboard Layout -->
@@ -49,7 +48,7 @@
             </div>
           </div>
           <div class="quick-actions">
-            <button id="">Play Now</button>
+            <button>Play Now</button>
             <button>Join Match</button>
             <button>Recent Quizzes</button>
           </div>
@@ -76,7 +75,7 @@
               <li><span>Angela Bairan</span><span>4200 pts</span></li>
               <li><strong>You</strong><span>3900 pts</span></li>
             </ol>
-            <a href="leaderboards.html"
+            <a href="leaderboards.php"
               ><button>View Full Leaderboards</button></a
             >
           </section>

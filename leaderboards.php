@@ -1,9 +1,11 @@
+<?php session_start(); ?>
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>8BitBrain</title>
+
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="imgs/Sans_Favi.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -13,27 +15,16 @@
       rel="stylesheet"
     />
   </head>
+
   <body>
+    <div class="bg"></div>
+
     <header class="header">
-      <a href="index.html" class="logo"
-        >8BitBrain
+      <a href="index.php" class="logo">
+        8BitBrain
         <img src="imgs/Sans_Favi.png" alt="logo" class="logoimg" />
       </a>
-
-      <button class="hamburger" aria-label="Open menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-
-      <nav class="navbar">
-        <a href="index.html">Home</a>
-        <a href="about.html">About</a>
-        <a href="modes.html">Game Modes</a>
-        <a href="contacts.html">Contact</a>
-        <a href="leaderboards.html" class="active">Leaderboards</a>
-        <a href="login.html"><button class="btn-login">Login</button></a>
-      </nav>
+      <?php include("navbar.php"); ?>
     </header>
 
     <main>

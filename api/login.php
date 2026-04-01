@@ -1,4 +1,5 @@
 <?php
+session_start();
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
@@ -8,9 +9,6 @@ require_once '../db.php';
 
 // Get POST data
 $data = json_decode(file_get_contents("php://input"), true);
-
-// Log the request for debugging
-error_log("Login attempt - Data received: " . json_encode($data));
 
 // Validate required fields
 if (!isset($data['email']) || !isset($data['password'])) {
@@ -24,23 +22,11 @@ if (!isset($data['email']) || !isset($data['password'])) {
 $email = $conn->real_escape_string($data['email']);
 $password = $data['password'];
 
-// Find user by email
+// Find user
 $sql = "SELECT id, fullname, email, username, account_type, password FROM users WHERE email = '$email'";
-error_log("SQL Query: " . $sql);
-
 $result = $conn->query($sql);
 
-if (!$result) {
-    error_log("SQL Error: " . $conn->error);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database error: ' . $conn->error
-    ]);
-    exit;
-}
-
 if ($result->num_rows === 0) {
-    error_log("No user found with email: " . $email);
     echo json_encode([
         'success' => false,
         'message' => 'Invalid email or password'
@@ -49,9 +35,8 @@ if ($result->num_rows === 0) {
 }
 
 $user = $result->fetch_assoc();
-error_log("User found: " . $user['email'] . " | Password match: " . ($user['password'] === $password ? 'YES' : 'NO'));
 
-// Check password (in production, use password_verify with hashed passwords)
+// Check password (use password_hash in real projects)
 if ($user['password'] !== $password) {
     echo json_encode([
         'success' => false,
@@ -60,8 +45,14 @@ if ($user['password'] !== $password) {
     exit;
 }
 
-// Login successful
-error_log("Login successful for user: " . $user['email']);
+// ✅ CREATE SESSION VARIABLES
+$_SESSION['logged_in'] = true;
+$_SESSION['user_id'] = $user['id'];
+$_SESSION['username'] = $user['username'];
+$_SESSION['fullname'] = $user['fullname'];
+$_SESSION['account_type'] = $user['account_type']; // <-- “admin” or “user”
+
+// ✅ SEND JSON RESPONSE
 echo json_encode([
     'success' => true,
     'message' => 'Login successful',
