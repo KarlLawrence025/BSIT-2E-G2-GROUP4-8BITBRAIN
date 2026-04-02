@@ -1,45 +1,26 @@
 // ========================================
 // ADMIN DASHBOARD - DATABASE CRUD OPERATIONS
+// This is the ONLY file that handles admin quiz/user/feedback logic.
+// script.js must NOT contain any of this code.
 // ========================================
 
 console.log("Admin Dashboard JS loaded 🔧");
 
-const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
-if (currentUser.accountType !== 'admin') {
-    console.warn('Non-admin user attempted to access admin dashboard');
-}
-
 const API_BASE = 'api/';
 
 // ========================================
-// UTILITY FUNCTIONS
+// UTILITY
 // ========================================
 
 async function fetchAPI(endpoint, method = 'GET', data = null) {
-    const options = {
-        method,
-        headers: { 'Content-Type': 'application/json' }
-    };
-    if (data && method !== 'GET') {
-        options.body = JSON.stringify(data);
-    }
-
+    const options = { method, headers: { 'Content-Type': 'application/json' } };
+    if (data && method !== 'GET') options.body = JSON.stringify(data);
     try {
         const response = await fetch(API_BASE + endpoint, options);
-        const result   = await response.json();
-        return result;
+        return await response.json();
     } catch (error) {
-        console.error('❌ API Error:', error);
+        console.error('API Error:', error);
         return { success: false, message: 'Network error: ' + error.message };
-    }
-}
-
-function showMessage(message, type = 'success') {
-    // Use toast if available, fall back to alert
-    if (typeof showToast === 'function') {
-        showToast(message, type);
-    } else {
-        alert(message);
     }
 }
 
@@ -48,16 +29,13 @@ function showToast(message, type = 'success') {
     const toast  = document.createElement('div');
     toast.textContent = message;
     toast.style.cssText = `
-        position:fixed; bottom:20px; right:20px; padding:15px 20px;
-        background:${colors[type] || colors.success}; color:#1a0b2e;
-        border:2px solid ${colors[type] || colors.success};
-        font-family:'Courier New',monospace; font-size:12px; font-weight:bold;
-        z-index:9999; border-radius:4px;
-        box-shadow:0 0 15px ${colors[type] || colors.success};
-        animation:toastIn .3s ease;
-    `;
+        position:fixed;bottom:20px;right:20px;padding:15px 20px;
+        background:${colors[type]||colors.success};color:#1a0b2e;
+        border:2px solid ${colors[type]||colors.success};
+        font-family:'Courier New',monospace;font-size:12px;font-weight:bold;
+        z-index:9999;border-radius:4px;box-shadow:0 0 15px ${colors[type]||colors.success};`;
     document.body.appendChild(toast);
-    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500);
+    setTimeout(() => toast.remove(), 3500);
 }
 
 // ========================================
@@ -67,7 +45,6 @@ function showToast(message, type = 'success') {
 async function loadDashboardStats() {
     const result = await fetchAPI('get_stats.php');
     if (!result.success) return;
-
     document.getElementById('stat-quizzes').textContent  = result.data.total_quizzes;
     document.getElementById('stat-users').textContent    = result.data.total_users;
     document.getElementById('stat-feedback').textContent = result.data.pending_feedback;
@@ -78,11 +55,9 @@ async function loadDashboardStats() {
     } else {
         activityList.innerHTML = result.data.recent_activity.map(a => `
             <div class="activity-item">
-                <span>${a.type === 'user' ? '👤' : '📝'}</span>
-                <span>${a.name}</span>
-                <span>${new Date(a.created_at).toLocaleString()}</span>
-            </div>
-        `).join('');
+                <span>${a.type === 'user' ? '👤' : '📝'} ${a.name}</span>
+                <span style="font-size:10px;opacity:.6;">${new Date(a.created_at).toLocaleString()}</span>
+            </div>`).join('');
     }
 }
 
@@ -93,12 +68,10 @@ async function loadDashboardStats() {
 async function loadUsers() {
     const result = await fetchAPI('get_users.php');
     const tbody  = document.getElementById('users-tbody');
-
     if (!result.success || !result.data.length) {
         tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No users found</td></tr>';
         return;
     }
-
     tbody.innerHTML = result.data.map(user => `
         <tr data-id="${user.id}">
             <td>${user.id}</td>
@@ -109,18 +82,16 @@ async function loadUsers() {
                 <button class="btn-action btn-edit"   onclick="editUser(${user.id})">✏️ Edit</button>
                 <button class="btn-action btn-delete" onclick="deleteUser(${user.id})">🗑️ Delete</button>
             </td>
-        </tr>
-    `).join('');
+        </tr>`).join('');
 }
 
 let currentEditingUserId = null;
 
 function openUserModal(userId = null) {
-    const modal = document.getElementById('user-modal');
     document.getElementById('user-form').reset();
     document.getElementById('modal-title').textContent = userId ? 'Edit User' : 'New User';
     currentEditingUserId = userId;
-    modal.classList.remove('hidden');
+    document.getElementById('user-modal').classList.remove('hidden');
     if (userId) loadUserData(userId);
 }
 
@@ -135,109 +106,73 @@ async function loadUserData(userId) {
     document.getElementById('user-role').value     = user.account_type;
 }
 
-async function saveUser(event) {
-    event.preventDefault();
+document.getElementById('user-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
     const userData = {
         username:     document.getElementById('user-username').value,
         email:        document.getElementById('user-email').value,
         account_type: document.getElementById('user-role').value,
         fullname:     document.getElementById('user-username').value,
-        age:          18,
-        password:     'password123'
+        age: 18, password: 'password123'
     };
-
     let result;
-    if (currentEditingUserId) {
-        userData.id = currentEditingUserId;
-        result = await fetchAPI('update_user.php', 'POST', userData);
-    } else {
-        result = await fetchAPI('create_user.php', 'POST', userData);
-    }
+    if (currentEditingUserId) { userData.id = currentEditingUserId; result = await fetchAPI('update_user.php', 'POST', userData); }
+    else { result = await fetchAPI('create_user.php', 'POST', userData); }
 
-    if (result.success) {
-        showToast(result.message, 'success');
-        closeModal('user-modal');
-        loadUsers();
-        loadDashboardStats();
-    } else {
-        showToast(result.message, 'error');
-    }
-}
+    if (result.success) { showToast(result.message, 'success'); closeModal('user-modal'); loadUsers(); loadDashboardStats(); }
+    else { showToast(result.message, 'error'); }
+});
 
 function editUser(userId)  { openUserModal(userId); }
 
 async function deleteUser(userId) {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    if (!confirm('Delete this user?')) return;
     const result = await fetchAPI('delete_user.php', 'POST', { id: userId });
-    if (result.success) {
-        showToast(result.message, 'success');
-        loadUsers();
-        loadDashboardStats();
-    } else {
-        showToast(result.message, 'error');
-    }
+    if (result.success) { showToast(result.message, 'success'); loadUsers(); loadDashboardStats(); }
+    else { showToast(result.message, 'error'); }
 }
 
 // ========================================
-// QUIZ MANAGEMENT - QUESTION BUILDER
+// QUIZ CREATION - Question Builder
 // ========================================
 
 let questionCount = 0;
 
 document.getElementById('add-question-btn')?.addEventListener('click', () => {
     questionCount++;
-    const container = document.getElementById('questions-container');
-    const block     = document.createElement('div');
+    const block = document.createElement('div');
     block.className = 'question-block';
     block.id        = `question-${questionCount}`;
-
     block.innerHTML = `
         <h4 class="question-number">Question ${questionCount}</h4>
-        <div class="form-group">
-            <label>Question Text *</label>
-            <input type="text" class="question-text" required placeholder="Enter your question here">
-        </div>
-        <div class="form-group">
-            <label>Option A *</label>
-            <input type="text" class="option-input" required placeholder="Option A">
-        </div>
-        <div class="form-group">
-            <label>Option B *</label>
-            <input type="text" class="option-input" required placeholder="Option B">
-        </div>
-        <div class="form-group">
-            <label>Option C *</label>
-            <input type="text" class="option-input" required placeholder="Option C">
-        </div>
-        <div class="form-group">
-            <label>Option D *</label>
-            <input type="text" class="option-input" required placeholder="Option D">
-        </div>
-        <div class="form-group">
-            <label>Correct Answer *</label>
+        <div class="form-group"><label>Question Text *</label>
+            <input type="text" class="question-text" required placeholder="Enter your question here"></div>
+        <div class="form-group"><label>Option A *</label>
+            <input type="text" class="option-input" required placeholder="Option A"></div>
+        <div class="form-group"><label>Option B *</label>
+            <input type="text" class="option-input" required placeholder="Option B"></div>
+        <div class="form-group"><label>Option C *</label>
+            <input type="text" class="option-input" required placeholder="Option C"></div>
+        <div class="form-group"><label>Option D *</label>
+            <input type="text" class="option-input" required placeholder="Option D"></div>
+        <div class="form-group"><label>Correct Answer *</label>
             <select class="correct-answer" required>
                 <option value="">-- Select correct answer --</option>
                 <option value="0">Option A</option>
                 <option value="1">Option B</option>
                 <option value="2">Option C</option>
                 <option value="3">Option D</option>
-            </select>
-        </div>
-        <button type="button" class="btn-admin btn-danger" onclick="removeQuestion(${questionCount})">
-            🗑️ Remove Question
-        </button>
-        <hr>
-    `;
-    container.appendChild(block);
+            </select></div>
+        <button type="button" class="btn-admin btn-danger" onclick="removeQuestion(${questionCount})">🗑️ Remove</button>
+        <hr>`;
+    document.getElementById('questions-container').appendChild(block);
     renumberQuestions();
-
-    // Scroll to new question
     block.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 function removeQuestion(id) {
-    const block = document.getElementById(`question-${id}`);
-    if (block) { block.remove(); renumberQuestions(); }
+    document.getElementById(`question-${id}`)?.remove();
+    renumberQuestions();
 }
 
 function renumberQuestions() {
@@ -248,7 +183,9 @@ function renumberQuestions() {
 }
 
 // ========================================
-// QUIZ FORM SUBMISSION → DATABASE
+// QUIZ FORM SUBMIT → DATABASE
+// THIS IS THE ONLY quiz-form submit handler.
+// script.js must NOT have one.
 // ========================================
 
 document.getElementById('quiz-form')?.addEventListener('submit', async (e) => {
@@ -258,24 +195,22 @@ document.getElementById('quiz-form')?.addEventListener('submit', async (e) => {
     submitBtn.textContent = '⏳ Saving...';
     submitBtn.disabled    = true;
 
-    // ── Collect quiz meta ────────────────────────────────────────────────────
     const title      = document.getElementById('quiz-title').value.trim();
     const category   = document.getElementById('quiz-category').value.trim();
     const difficulty = document.getElementById('quiz-difficulty').value;
     const mode       = document.getElementById('quiz-mode').value;
     const refUrl     = document.getElementById('quiz-reference')?.value.trim() || null;
 
-    // ── Collect questions ────────────────────────────────────────────────────
     const questionBlocks = document.querySelectorAll('.question-block');
-    const questions      = [];
-    let   valid          = true;
-
     if (questionBlocks.length === 0) {
         showToast('Please add at least one question.', 'warning');
         submitBtn.textContent = 'Create Quiz';
         submitBtn.disabled    = false;
         return;
     }
+
+    const questions = [];
+    let valid = true;
 
     questionBlocks.forEach((block, index) => {
         const qText        = block.querySelector('.question-text').value.trim();
@@ -284,49 +219,29 @@ document.getElementById('quiz-form')?.addEventListener('submit', async (e) => {
         const options      = Array.from(optionInputs).map(i => ({ text: i.value.trim() }));
         const correctIndex = correctSel.value !== '' ? parseInt(correctSel.value) : -1;
 
-        // Validate
-        if (!qText) {
-            showToast(`Question ${index + 1}: question text is empty.`, 'warning');
-            valid = false; return;
-        }
-        if (options.some(o => !o.text)) {
-            showToast(`Question ${index + 1}: all four options are required.`, 'warning');
-            valid = false; return;
-        }
-        if (correctIndex === -1) {
-            showToast(`Question ${index + 1}: please select the correct answer.`, 'warning');
-            valid = false; return;
-        }
+        if (!qText)                          { showToast(`Question ${index+1}: text is empty.`, 'warning');                    valid = false; return; }
+        if (options.some(o => !o.text))      { showToast(`Question ${index+1}: all options are required.`, 'warning');         valid = false; return; }
+        if (correctIndex === -1)             { showToast(`Question ${index+1}: select the correct answer.`, 'warning');        valid = false; return; }
 
         questions.push({ text: qText, options, correctAnswer: correctIndex });
     });
 
-    if (!valid) {
-        submitBtn.textContent = 'Create Quiz';
-        submitBtn.disabled    = false;
-        return;
-    }
+    if (!valid) { submitBtn.textContent = 'Create Quiz'; submitBtn.disabled = false; return; }
 
-    // ── Send to API ──────────────────────────────────────────────────────────
-    const payload = { title, category, difficulty, mode, reference_url: refUrl, questions };
-
-    const result = await fetchAPI('create_quiz.php', 'POST', payload);
+    const result = await fetchAPI('create_quiz.php', 'POST', {
+        title, category, difficulty, mode,
+        reference_url: refUrl,
+        questions
+    });
 
     if (result.success) {
-        showToast(`✅ "${title}" saved — ${result.questions} question(s) added!`, 'success');
-
-        // Reset form and question builder
+        showToast(`✅ "${title}" saved — ${result.questions} question(s)!`, 'success');
         e.target.reset();
         document.getElementById('questions-container').innerHTML = '';
         questionCount = 0;
-
-        // Refresh quiz table and stats
         loadQuizzes();
         loadDashboardStats();
-
-        // Switch to Quizzes tab so admin can see it immediately
         switchTab('quizzes');
-
     } else {
         showToast('❌ ' + result.message, 'error');
     }
@@ -336,18 +251,16 @@ document.getElementById('quiz-form')?.addEventListener('submit', async (e) => {
 });
 
 // ========================================
-// QUIZ TABLE
+// QUIZ TABLE - loads from DATABASE
 // ========================================
 
 async function loadQuizzes() {
     const result = await fetchAPI('get_quizzes_all.php');
     const tbody  = document.getElementById('quizzes-tbody');
-
     if (!result.success || !result.data.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No quizzes found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No quizzes in database yet.</td></tr>';
         return;
     }
-
     tbody.innerHTML = result.data.map(quiz => `
         <tr>
             <td>${quiz.id}</td>
@@ -359,53 +272,96 @@ async function loadQuizzes() {
                 <button class="btn-action btn-edit"   onclick="editQuiz(${quiz.id})">✏️ Edit</button>
                 <button class="btn-action btn-delete" onclick="deleteQuiz(${quiz.id})">🗑️ Delete</button>
             </td>
-        </tr>
-    `).join('');
+        </tr>`).join('');
 }
 
 async function deleteQuiz(quizId) {
     if (!confirm('Delete this quiz and all its questions?')) return;
     const result = await fetchAPI('delete_quiz.php', 'POST', { id: quizId });
-    if (result.success) {
-        showToast(result.message, 'success');
-        loadQuizzes();
-        loadDashboardStats();
-    } else {
-        showToast(result.message, 'error');
-    }
+    if (result.success) { showToast(result.message, 'success'); loadQuizzes(); loadDashboardStats(); }
+    else { showToast(result.message, 'error'); }
 }
 
-function editQuiz(quizId) {
-    showToast('Quiz editing coming soon!', 'info');
-}
+function editQuiz(quizId) { showToast('Quiz editing coming soon!', 'info'); }
 
 // ========================================
-// FEEDBACK MANAGEMENT
+// IMPORT
+// ========================================
+
+document.getElementById('import-btn')?.addEventListener('click', () => {
+    const file = document.getElementById('quiz-file').files[0];
+    if (!file) { showToast('Select a file first', 'warning'); return; }
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+        try {
+            const data    = JSON.parse(ev.target.result);
+            const quizzes = Array.isArray(data) ? data : [data];
+            let imported  = 0;
+            for (const q of quizzes) {
+                const result = await fetchAPI('create_quiz.php', 'POST', {
+                    title: q.title || 'Imported Quiz', category: q.category || 'General',
+                    difficulty: q.difficulty || 'medium', mode: q.mode || 'single_player',
+                    questions: q.questions || []
+                });
+                if (result.success) imported++;
+            }
+            loadQuizzes(); loadDashboardStats();
+            document.getElementById('quiz-file').value = '';
+            showToast(`Imported ${imported}/${quizzes.length} quiz(zes)!`, 'success');
+        } catch (err) { showToast('Error parsing file: ' + err.message, 'error'); }
+    };
+    reader.readAsText(file);
+});
+
+// ========================================
+// FEEDBACK
 // ========================================
 
 async function loadFeedback() {
     const result = await fetchAPI('get_feedback.php');
     const list   = document.getElementById('feedback-list');
+    if (!result.success || !result.data.length) { list.innerHTML = '<p class="empty-state">No feedback yet.</p>'; return; }
 
-    if (!result.success || !result.data.length) {
-        list.innerHTML = '<p class="empty-state">No feedback found</p>';
-        return;
-    }
+    const typeEmoji = { general:'💬', suggestion:'💡', bug:'🐛', complaint:'⚠️' };
+    const modeLabel = { single_player:'Single Player', timed_quiz:'Timed Quiz', ranked_quiz:'Ranked Quiz', memory_match:'Memory Match', endless_quiz:'Endless Quiz' };
 
-    list.innerHTML = result.data.map(f => `
+    list.innerHTML = result.data.map(f => {
+        const stars = f.rating ? '★'.repeat(f.rating) + '☆'.repeat(5-f.rating) : 'No rating';
+        return `
         <div class="feedback-item ${f.status}">
-            <div class="feedback-header">
-                <span>👤 ${f.user_name || 'Anonymous'}</span>
-                <span>📝 ${f.quiz_title || 'General'}</span>
-                <span>${'⭐'.repeat(f.rating || 0)}</span>
+            <div class="feedback-meta-top">
+                <span class="feedback-type-badge">${typeEmoji[f.feedback_type]||'💬'} ${f.feedback_type||'general'}</span>
+                <span class="feedback-status-badge ${f.status}">${f.status.toUpperCase()}</span>
             </div>
-            <p class="feedback-text">${f.feedback_text}</p>
+            <div class="feedback-labels">
+                <span>👤 <strong>${f.user_name||'Anonymous'}</strong></span>
+                <span>📝 ${f.quiz_title||'No quiz linked'}</span>
+                <span>🗂️ ${f.quiz_category||'—'}</span>
+                <span>🎮 ${modeLabel[f.quiz_mode]||f.quiz_mode||'—'}</span>
+                <span>⭐ ${stars}</span>
+            </div>
+            <p class="feedback-body">"${f.feedback_text}"</p>
             <div class="feedback-footer">
-                <span>${new Date(f.created_at).toLocaleDateString()}</span>
-                <span class="badge ${f.status}">${f.status}</span>
+                <span style="font-size:11px;opacity:.5;">🕒 ${new Date(f.created_at).toLocaleString()}</span>
+                <div style="display:flex;gap:8px;">
+                    ${f.status==='pending' ? `<button class="btn-action btn-edit" onclick="resolveFeedback(${f.id})">✅ Resolve</button>` : ''}
+                    <button class="btn-action btn-delete" onclick="deleteFeedbackItem(${f.id})">🗑️ Delete</button>
+                </div>
             </div>
-        </div>
-    `).join('');
+        </div>`; }).join('');
+}
+
+async function resolveFeedback(id) {
+    const result = await fetchAPI('resolve_feedback.php', 'POST', { id });
+    if (result.success) { showToast('Resolved', 'success'); loadFeedback(); }
+    else { showToast(result.message, 'error'); }
+}
+
+async function deleteFeedbackItem(id) {
+    if (!confirm('Delete this feedback?')) return;
+    const result = await fetchAPI('delete_feedback.php', 'POST', { id });
+    if (result.success) { showToast('Deleted', 'success'); loadFeedback(); loadDashboardStats(); }
+    else { showToast(result.message, 'error'); }
 }
 
 // ========================================
@@ -415,23 +371,15 @@ async function loadFeedback() {
 async function loadReferences() {
     const result = await fetchAPI('get_references.php');
     const tbody  = document.getElementById('references-tbody');
-
-    if (!result.success || !result.data.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No references found</td></tr>';
-        return;
-    }
-
+    if (!result.success || !result.data.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No references found</td></tr>'; return; }
     tbody.innerHTML = result.data.map(ref => `
         <tr>
             <td>${ref.quiz_id}</td>
             <td>${ref.question_text}</td>
-            <td>${ref.reference_url
-                ? `<a href="${ref.reference_url}" target="_blank" style="color:#38bdf8">${ref.reference_url}</a>`
-                : ref.reference_text || 'N/A'}</td>
+            <td>${ref.reference_url ? `<a href="${ref.reference_url}" target="_blank" style="color:#38bdf8">${ref.reference_url}</a>` : ref.reference_text||'N/A'}</td>
             <td><span class="badge">${ref.reference_type}</span></td>
             <td><button class="btn-action btn-delete" onclick="deleteReference(${ref.id})">🗑️</button></td>
-        </tr>
-    `).join('');
+        </tr>`).join('');
 }
 
 async function deleteReference(refId) {
@@ -446,18 +394,14 @@ async function deleteReference(refId) {
 function switchTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-    const tab = document.getElementById(tabName + '-tab');
-    const btn = document.querySelector(`[data-tab="${tabName}"]`);
-    if (tab) tab.classList.add('active');
-    if (btn) btn.classList.add('active');
+    document.getElementById(tabName + '-tab')?.classList.add('active');
+    document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const tab = btn.getAttribute('data-tab');
         switchTab(tab);
-
         switch (tab) {
             case 'dashboard':  loadDashboardStats(); break;
             case 'users':      loadUsers();          break;
@@ -475,41 +419,30 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 document.getElementById('create-btn')?.addEventListener('click', () => {
     const active = document.querySelector('.tab-btn.active')?.getAttribute('data-tab');
     if (active === 'users') openUserModal();
-    if (active === 'add-quiz') document.getElementById('quiz-form')?.reset();
 });
 
 // ========================================
 // MODALS
 // ========================================
 
-function closeModal(modalId) {
-    document.getElementById(modalId)?.classList.add('hidden');
-}
+function closeModal(modalId) { document.getElementById(modalId)?.classList.add('hidden'); }
 
 document.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
-    btn.addEventListener('click', function () {
-        this.closest('.modal')?.classList.add('hidden');
-    });
+    btn.addEventListener('click', function() { this.closest('.modal')?.classList.add('hidden'); });
 });
-
-// ========================================
-// FORM SUBMISSIONS
-// ========================================
-
-document.getElementById('user-form')?.addEventListener('submit', saveUser);
 
 // ========================================
 // SEARCH
 // ========================================
 
-document.getElementById('user-search')?.addEventListener('input', function () {
+document.getElementById('user-search')?.addEventListener('input', function() {
     const q = this.value.toLowerCase();
     document.querySelectorAll('#users-tbody tr').forEach(row => {
         row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
     });
 });
 
-document.getElementById('quiz-search')?.addEventListener('input', function () {
+document.getElementById('quiz-search')?.addEventListener('input', function() {
     const q = this.value.toLowerCase();
     document.querySelectorAll('#quizzes-tbody tr').forEach(row => {
         row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
@@ -517,61 +450,19 @@ document.getElementById('quiz-search')?.addEventListener('input', function () {
 });
 
 // ========================================
-// IMPORT
-// ========================================
-
-document.getElementById('import-btn')?.addEventListener('click', () => {
-    const file = document.getElementById('quiz-file').files[0];
-    if (!file) { showToast('Select a file first', 'warning'); return; }
-
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-        try {
-            const data   = JSON.parse(ev.target.result);
-            const quizzes = Array.isArray(data) ? data : [data];
-            let imported = 0;
-
-            for (const q of quizzes) {
-                const payload = {
-                    title:      q.title      || 'Imported Quiz',
-                    category:   q.category   || 'General',
-                    difficulty: q.difficulty || 'medium',
-                    mode:       q.mode       || 'single_player',
-                    questions:  q.questions  || []
-                };
-                const result = await fetchAPI('create_quiz.php', 'POST', payload);
-                if (result.success) imported++;
-            }
-
-            loadQuizzes();
-            loadDashboardStats();
-            document.getElementById('quiz-file').value = '';
-            showToast(`Imported ${imported} of ${quizzes.length} quiz(zes)!`, 'success');
-        } catch (err) {
-            showToast('Error parsing file: ' + err.message, 'error');
-        }
-    };
-    reader.readAsText(file);
-});
-
-// ========================================
-// INIT
+// INIT — loads everything from DATABASE
 // ========================================
 
 window.addEventListener('DOMContentLoaded', () => {
     loadDashboardStats();
     loadUsers();
+    loadQuizzes();      // ← load quizzes from DB on page load
     loadReferences();
 
-    // Toast animation style
+    // Toast animation
     const style = document.createElement('style');
-    style.textContent = `
-        @keyframes toastIn {
-            from { transform: translateX(400px); opacity: 0; }
-            to   { transform: translateX(0);     opacity: 1; }
-        }
-    `;
+    style.textContent = `@keyframes toastIn { from{transform:translateX(400px);opacity:0} to{transform:translateX(0);opacity:1} }`;
     document.head.appendChild(style);
 
-    console.log('✨ 8BitBrain Admin Dashboard Ready!');
+    console.log('✨ Admin Dashboard Ready — all data from database');
 });

@@ -52,12 +52,24 @@ function setModeSettings() {
 
 // ── Quiz Selection ────────────────────────────────────────────────────────────
 async function loadQuizSelection() {
+  const container = document.getElementById("quizGrid");
+  if (!container) return;
+
+  container.innerHTML = `<p style="color:#fff;text-align:center;grid-column:1/-1;">Loading quizzes...</p>`;
+
   try {
     const response = await fetch(`api/get_quizzes.php?mode=${currentMode}`);
     const data     = await response.json();
-    if (!data.success) { showError("Failed to load quizzes"); return; }
+
+    if (!data.success) {
+      container.innerHTML = `<p style="color:#f87171;text-align:center;grid-column:1/-1;">Failed to load quizzes.</p>`;
+      return;
+    }
+
     displayQuizSelection(data.data);
-  } catch (e) { showError("Error loading quizzes"); }
+  } catch (e) {
+    container.innerHTML = `<p style="color:#f87171;text-align:center;grid-column:1/-1;">Network error. Is XAMPP running?</p>`;
+  }
 }
 
 function displayQuizSelection(quizzes) {
@@ -65,11 +77,11 @@ function displayQuizSelection(quizzes) {
   if (!container) return;
   container.innerHTML = "";
 
-  if (quizzes.length === 0) {
+  if (!quizzes || quizzes.length === 0) {
     container.innerHTML = `
       <div style="color:#fff;text-align:center;grid-column:1/-1;padding:40px;">
-        <h3>No quizzes available for this mode yet.</h3>
-        <p style="opacity:.7;margin-top:10px;">Ask your admin to create some!</p>
+        <h3 style="margin-bottom:10px;">No quizzes available for this mode yet.</h3>
+        <p style="opacity:.6;">Ask your admin to create some quizzes!</p>
       </div>`;
     return;
   }
@@ -82,7 +94,7 @@ function displayQuizSelection(quizzes) {
       <h3>${quiz.title}</h3>
       <p class="category">${quiz.category}</p>
       <p class="difficulty ${quiz.difficulty}">${quiz.difficulty}</p>
-      <p class="question-count">${quiz.question_count} questions</p>`;
+      <p class="question-count">${quiz.question_count || 0} questions</p>`;
     container.appendChild(card);
   });
 }
@@ -94,13 +106,26 @@ function selectQuiz(quizId) {
 
 // ── Quiz Gameplay ─────────────────────────────────────────────────────────────
 async function startQuiz() {
-  const quizId = localStorage.getItem("selectedQuizId");
-  if (!quizId) { showError("No quiz selected"); return; }
+  const quizId = parseInt(localStorage.getItem("selectedQuizId"));
+  if (!quizId || quizId <= 0) {
+    showError("No quiz selected. Please go back and pick a quiz.");
+    return;
+  }
 
   try {
     const response = await fetch(`api/get_quiz_questions.php?quiz_id=${quizId}`);
     const data     = await response.json();
-    if (!data.success) { showError("Failed to load quiz questions"); return; }
+
+    if (!data.success) {
+      // Show the error message from the server clearly
+      showError(data.message || "Failed to load quiz questions.");
+      return;
+    }
+
+    if (!data.questions || data.questions.length === 0) {
+      showError("This quiz has no questions yet. Please ask your admin to add some.");
+      return;
+    }
 
     currentQuiz      = data.quiz;
     currentQuestions = data.questions;
@@ -110,7 +135,11 @@ async function startQuiz() {
     showQuizGame();
     loadQuestion();
     if (timedMode || rankedMode) startTimer();
-  } catch (e) { showError("Error starting quiz"); }
+
+  } catch (e) {
+    console.error("startQuiz error:", e);
+    showError("Network error loading quiz. Please check your connection.");
+  }
 }
 
 function prepareQuestionsForMode() {
@@ -157,8 +186,8 @@ function updateQuizHeader() {
   const counterEl = document.getElementById("questionCounter");
   const scoreEl   = document.getElementById("score");
 
-  if (titleEl) titleEl.textContent = currentQuiz.title;
-  if (scoreEl) scoreEl.textContent = `Score: ${score}`;
+  if (titleEl)   titleEl.textContent = currentQuiz?.title || "Quiz";
+  if (scoreEl)   scoreEl.textContent = `Score: ${score}`;
 
   if (memoryMatchMode) {
     if (counterEl) counterEl.textContent = `Pairs: ${matchedPairs}/${currentQuestions.length / 2}`;
@@ -182,13 +211,20 @@ function loadStandardQuestion() {
   const optionsEl  = document.getElementById("options");
 
   if (questionEl) questionEl.textContent = question.question;
+
   if (optionsEl) {
     optionsEl.innerHTML = "";
+
+    if (!question.answers || question.answers.length === 0) {
+      optionsEl.innerHTML = `<p style="color:#f87171;">This question has no answer options.</p>`;
+      return;
+    }
+
     question.answers.forEach((answer, index) => {
-      const div     = document.createElement("div");
-      div.className = "option";
+      const div       = document.createElement("div");
+      div.className   = "option";
       div.textContent = answer.text;
-      div.onclick   = () => selectAnswer(index);
+      div.onclick     = () => selectAnswer(index);
       optionsEl.appendChild(div);
     });
   }
@@ -196,7 +232,7 @@ function loadStandardQuestion() {
 }
 
 function loadMemoryMatchQuestion() {
-  const container = document.getElementById("questionText").parentElement;
+  const container     = document.getElementById("questionText").parentElement;
   container.innerHTML = "<h3>Memory Match — pair the terms with their definitions</h3>";
 
   const grid     = document.createElement("div");
@@ -249,9 +285,9 @@ function checkMatch() {
 }
 
 function selectAnswer(answerIndex) {
-  const question   = currentQuestions[currentQuestionIndex];
-  const answer     = question.answers[answerIndex];
-  const isCorrect  = Number(answer.is_correct) === 1;
+  const question  = currentQuestions[currentQuestionIndex];
+  const answer    = question.answers[answerIndex];
+  const isCorrect = Number(answer.is_correct) === 1;
 
   userAnswers.push({ questionId: question.id, selectedAnswer: answerIndex, isCorrect });
 
@@ -309,17 +345,18 @@ async function saveQuizResult(correct, total, timeTaken) {
     const response = await fetch("api/save_quiz_result.php", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({
-        quiz_id:         currentQuiz.id,
+      body: JSON.stringify({
+        quiz_id:         currentQuiz?.id || 0,
         mode:            currentMode,
         correct_answers: correct,
         total_questions: total,
         time_taken:      timeTaken,
-        time_limit:      timeLimit,    // needed for time bonus calculation
+        time_limit:      timeLimit,
         user_id:         SESSION_USER_ID
       })
     });
     const data = await response.json();
+    console.log("Save result:", data);
     return data.points_earned || 0;
   } catch (e) {
     console.error("Error saving result:", e);
@@ -336,12 +373,8 @@ function showQuizResults(correct, total, timeTaken, pointsEarned) {
   let summaryTotal   = total;
 
   if (endlessMode)     { title = endlessLives > 0 ? "Endless — Survived!" : "Game Over!"; }
-  if (memoryMatchMode) {
-    title          = "Memory Match Complete!";
-    summaryCorrect = matchedPairs;
-    summaryTotal   = currentQuestions.length / 2;
-  }
-  if (rankedMode) { title = "Ranked Quiz Complete!"; }
+  if (memoryMatchMode) { title = "Memory Match Complete!"; summaryCorrect = matchedPairs; summaryTotal = currentQuestions.length / 2; }
+  if (rankedMode)      { title = "Ranked Quiz Complete!"; }
 
   document.getElementById("resultsModeTitle").textContent = title;
   document.getElementById("correctAnswers").textContent   = summaryCorrect;
@@ -367,7 +400,9 @@ function shuffleArray(array) {
   return array;
 }
 
-function showError(message) { alert(message); }
+function showError(message) {
+  alert(message);
+}
 
 function setupEventListeners() {
   document.getElementById("quitBtn")?.addEventListener("click", () => {
@@ -383,9 +418,7 @@ function resetFeedbackForm() {
   selectedRating = 0;
   const form = document.getElementById("feedbackForm");
   if (form) form.reset();
-
   document.querySelectorAll(".star").forEach(s => s.classList.remove("active"));
-
   const wrapper = document.getElementById("feedbackFormWrapper");
   const success = document.getElementById("feedbackSuccess");
   const btn     = document.getElementById("feedbackToggleBtn");
@@ -440,7 +473,7 @@ async function submitFeedback(event) {
     const response = await fetch("api/submit_feedback.php", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({
+      body: JSON.stringify({
         user_id:       SESSION_USER_ID,
         quiz_id:       currentQuiz?.id || null,
         feedback_text: text,
