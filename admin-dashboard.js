@@ -184,17 +184,16 @@ function renumberQuestions() {
 
 // ========================================
 // QUIZ FORM SUBMIT → DATABASE
-// THIS IS THE ONLY quiz-form submit handler.
-// script.js must NOT have one.
 // ========================================
 
 document.getElementById('quiz-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const submitBtn = e.target.querySelector('[type="submit"]');
-    submitBtn.textContent = '⏳ Saving...';
-    submitBtn.disabled    = true;
+    submitBtn.textContent = '⏳ Saving to DB...';
+    submitBtn.disabled = true;
 
+    // FIX: Define variables by grabbing values from the DOM
     const title      = document.getElementById('quiz-title').value.trim();
     const category   = document.getElementById('quiz-category').value.trim();
     const difficulty = document.getElementById('quiz-difficulty').value;
@@ -205,7 +204,7 @@ document.getElementById('quiz-form')?.addEventListener('submit', async (e) => {
     if (questionBlocks.length === 0) {
         showToast('Please add at least one question.', 'warning');
         submitBtn.textContent = 'Create Quiz';
-        submitBtn.disabled    = false;
+        submitBtn.disabled = false;
         return;
     }
 
@@ -219,35 +218,54 @@ document.getElementById('quiz-form')?.addEventListener('submit', async (e) => {
         const options      = Array.from(optionInputs).map(i => ({ text: i.value.trim() }));
         const correctIndex = correctSel.value !== '' ? parseInt(correctSel.value) : -1;
 
-        if (!qText)                          { showToast(`Question ${index+1}: text is empty.`, 'warning');                    valid = false; return; }
-        if (options.some(o => !o.text))      { showToast(`Question ${index+1}: all options are required.`, 'warning');         valid = false; return; }
-        if (correctIndex === -1)             { showToast(`Question ${index+1}: select the correct answer.`, 'warning');        valid = false; return; }
+        if (!qText) { 
+            showToast(`Question ${index+1}: text is empty.`, 'warning'); 
+            valid = false; return; 
+        }
+        if (options.some(o => !o.text)) { 
+            showToast(`Question ${index+1}: all options are required.`, 'warning'); 
+            valid = false; return; 
+        }
+        if (correctIndex === -1) { 
+            showToast(`Question ${index+1}: select the correct answer.`, 'warning'); 
+            valid = false; return; 
+        }
 
         questions.push({ text: qText, options, correctAnswer: correctIndex });
     });
 
-    if (!valid) { submitBtn.textContent = 'Create Quiz'; submitBtn.disabled = false; return; }
+    if (!valid) { 
+        submitBtn.textContent = 'Create Quiz'; 
+        submitBtn.disabled = false; 
+        return; 
+    }
 
+    // The Fetch Call now uses the defined variables
     const result = await fetchAPI('create_quiz.php', 'POST', {
-        title, category, difficulty, mode,
+        title, 
+        category, 
+        difficulty, 
+        mode,
         reference_url: refUrl,
         questions
     });
 
     if (result.success) {
-        showToast(`✅ "${title}" saved — ${result.questions} question(s)!`, 'success');
+        showToast(`✅ "${title}" successfully saved to Database!`, 'success');
         e.target.reset();
         document.getElementById('questions-container').innerHTML = '';
         questionCount = 0;
-        loadQuizzes();
-        loadDashboardStats();
+        
+        await loadQuizzes(); 
+        await loadDashboardStats();
         switchTab('quizzes');
     } else {
-        showToast('❌ ' + result.message, 'error');
+        showToast('❌ Database Error: ' + result.message, 'error');
+        console.error("Quiz Save Failed:", result.message);
     }
 
     submitBtn.textContent = 'Create Quiz';
-    submitBtn.disabled    = false;
+    submitBtn.disabled = false;
 });
 
 // ========================================
@@ -456,7 +474,7 @@ document.getElementById('quiz-search')?.addEventListener('input', function() {
 window.addEventListener('DOMContentLoaded', () => {
     loadDashboardStats();
     loadUsers();
-    loadQuizzes();      // ← load quizzes from DB on page load
+    loadQuizzes();      
     loadReferences();
 
     // Toast animation

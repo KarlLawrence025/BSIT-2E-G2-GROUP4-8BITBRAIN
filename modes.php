@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>8BitBrain</title>
+    <title>8BitBrain - Modes</title>
 
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="imgs/Sans_Favi.png" type="image/png" />
@@ -31,11 +31,17 @@
       <section class="modes-section">
         <div class="herostart">
           <h1>Select Mode</h1>
-          <button id="timed-btn" class="btn">Timed Quiz</button>
-          <button id="ranked-btn" class="btn">Ranked Quiz</button>
-          <button id="memory-btn" class="btn">Memory Match</button>
-          <button id="endless-btn" class="btn">Endless Quiz</button>
-          <button id="single-btn" class="btn">Single Player</button>
+          
+          <button id="timed-btn" class="btn" onclick="localStorage.setItem('selectedMode', 'timed_quiz'); window.location.href='quiz.php';">Timed Quiz</button>
+          
+          <button id="ranked-btn" class="btn" onclick="localStorage.setItem('selectedMode', 'ranked_quiz'); window.location.href='quiz.php';">Ranked Quiz</button>
+          
+          <button id="memory-btn" class="btn" onclick="localStorage.setItem('selectedMode', 'memory_match'); window.location.href='quiz.php';">Memory Match</button>
+          
+          <button id="endless-btn" class="btn" onclick="localStorage.setItem('selectedMode', 'endless_quiz'); window.location.href='quiz.php';">Endless Quiz</button>
+          
+          <button id="single-btn" class="btn" onclick="localStorage.setItem('selectedMode', 'single_player'); window.location.href='quiz.php';">Single Player</button>
+          
         </div>
       </section>
     </main>

@@ -1,49 +1,48 @@
-// ========================================
-// MAIN SCRIPT - GENERAL WEBSITE CODE ONLY
-// Admin dashboard logic lives entirely in admin-dashboard.js
-// DO NOT add any quiz/user/feedback CRUD here
-// ========================================
-
 console.log("JS loaded 🚀");
-
-// ========================================
-// HOME PAGE - Start Quiz button
-// ========================================
 
 document.addEventListener("DOMContentLoaded", () => {
   const startBtn = document.querySelector(".hero button");
+  
   if (startBtn) {
-    startBtn.addEventListener("click", () => {
-      const modes = ["single_player","timed_quiz","ranked_quiz","memory_match","endless_quiz"];
+    startBtn.addEventListener("click", (e) => {
+      const modes = ["single_player", "timed_quiz", "ranked_quiz", "memory_match", "endless_quiz"];
       const randomMode = modes[Math.floor(Math.random() * modes.length)];
+      
       localStorage.setItem("selectedMode", randomMode);
-      window.location.href = "quiz.php";
+      
+      if (startBtn.tagName !== 'A') {
+          window.location.href = "quiz.php";
+      }
     });
   }
 });
 
-// ========================================
-// MODES PAGE - Mode buttons
-// ========================================
-
 document.addEventListener("DOMContentLoaded", () => {
-  const modeMap = {
-    "timed-btn":   "timed_quiz",
-    "ranked-btn":  "ranked_quiz",
-    "memory-btn":  "memory_match",
-    "endless-btn": "endless_quiz",
-    "single-btn":  "single_player",
-  };
-  Object.entries(modeMap).forEach(([id, mode]) => {
-    const btn = document.getElementById(id);
-    if (btn) {
-      btn.addEventListener("click", () => {
-        localStorage.setItem("selectedMode", mode);
-        window.location.href = "quiz.php";
-      });
+  document.addEventListener("click", (e) => {
+    const target = e.target.closest(".mode-card, button, a");
+    if (!target) return;
+
+    if (target.closest(".hero")) return;
+
+    const text = target.textContent.toLowerCase();
+    const id = (target.id || "").toLowerCase();
+    
+    let exactMode = null;
+
+    if (text.includes("single") || id.includes("single")) exactMode = "single_player";
+    else if (text.includes("timed") || id.includes("timed")) exactMode = "timed_quiz";
+    else if (text.includes("ranked") || id.includes("ranked")) exactMode = "ranked_quiz";
+    else if (text.includes("memory") || id.includes("memory")) exactMode = "memory_match";
+    else if (text.includes("endless") || id.includes("endless")) exactMode = "endless_quiz";
+
+    if (exactMode) {
+      e.preventDefault(); 
+      localStorage.setItem("selectedMode", exactMode);
+      window.location.href = "quiz.php";
     }
   });
 });
+
 
 // ========================================
 // NAVIGATION - Active link highlighting

@@ -1,10 +1,5 @@
--- ============================================================
--- 8BitBrain Database - Leaderboard Update
--- Changes from previous version:
---   - leaderboard table restructured for accumulated totals
---   - quiz_attempts table added (stores every quiz attempt)
--- ============================================================
-
+CREATE DATABASE IF NOT EXISTS 8bitbrain_db;
+USE 8bitbrain_db;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";

@@ -1,7 +1,13 @@
-// ========================================
-// QUIZ SYSTEM - MAIN QUIZ LOGIC
-// ========================================
-
+function initializeQuiz() {
+  currentMode = localStorage.getItem("selectedMode") || "single_player";
+  
+  // ADD THIS LINE:
+  alert("The computer is searching the database for: " + currentMode);
+  
+  setModeSettings();
+  loadQuizSelection();
+  setupEventListeners();
+}
 console.log("Quiz system loaded 🎯");
 
 // ── Global state ──────────────────────────────────────────────────────────────
