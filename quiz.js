@@ -126,22 +126,26 @@ function resetQuizState() {
 }
 
 function showSection(id) {
-    const map = { quizLoading:"flex", quizGame:"block", quizResults:"block" };
-    Object.keys(map).forEach(k => {
+    ["quizLoading","quizGame","quizResults"].forEach(k => {
         const el = document.getElementById(k);
-        if (el) el.style.display = k === id ? map[k] : "none";
+        if (!el) return;
+        if (k === id) {
+            el.style.display = k === "quizLoading" ? "flex" : (k === "quizResults" ? "flex" : "block");
+        } else {
+            el.style.display = "none";
+        }
     });
 }
 
 // ── Header ────────────────────────────────────────────────────────────────────
 function updateQuizHeader() {
-    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    setTxt("quizTitle", `${currentQuiz?.title || "Quiz"} — ${MODE_LABELS[currentMode] || currentMode}`);
-    setTxt("score", `Score: ${score}`);
+    const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    s("quizTitle", `${currentQuiz?.title || "Quiz"} — ${MODE_LABELS[currentMode] || currentMode}`);
+    s("score", `Score: ${score}`);
 
-    if (memoryMatchMode)      setTxt("questionCounter", `Pairs: ${matchedPairs} / ${currentQuestions.length / 2}`);
-    else if (endlessMode)     setTxt("questionCounter", `Lives: ${endlessLives} | Streak: ${endlessStreak}`);
-    else                      setTxt("questionCounter", `Question ${Math.min(currentQuestionIndex + 1, currentQuestions.length)} of ${currentQuestions.length}`);
+    if (memoryMatchMode)  s("questionCounter", `Pairs: ${matchedPairs} / ${currentQuestions.length / 2}`);
+    else if (endlessMode) s("questionCounter", `Lives: ${endlessLives} | Streak: ${endlessStreak}`);
+    else                  s("questionCounter", `Question ${Math.min(currentQuestionIndex + 1, currentQuestions.length)} of ${currentQuestions.length}`);
 }
 
 // ── Questions ─────────────────────────────────────────────────────────────────
@@ -154,8 +158,8 @@ function loadStandardQuestion() {
     const question = currentQuestions[currentQuestionIndex];
     if (!question) { endQuiz(); return; }
 
-    const qEl  = document.getElementById("questionText");
-    const oEl  = document.getElementById("options");
+    const qEl = document.getElementById("questionText");
+    const oEl = document.getElementById("options");
     if (qEl) qEl.textContent = question.question;
 
     if (oEl) {
@@ -165,10 +169,10 @@ function loadStandardQuestion() {
             return;
         }
         shuffleArray([...question.answers]).forEach(answer => {
-            const div     = document.createElement("div");
-            div.className = "option";
+            const div = document.createElement("div");
+            div.className   = "option";
             div.textContent = answer.text;
-            div.onclick   = () => selectAnswer(answer, question);
+            div.onclick     = () => selectAnswer(answer, question);
             oEl.appendChild(div);
         });
     }
@@ -259,7 +263,6 @@ function selectAnswer(answer, question) {
     }
 
     updateQuizHeader();
-
     setTimeout(() => {
         if (endlessMode && endlessLives <= 0) { endQuiz(); return; }
         currentQuestionIndex++;
@@ -297,7 +300,8 @@ function endQuiz() {
         ? currentQuestions.length / 2
         : (endlessMode ? userAnswers.length : currentQuestions.length);
 
-    saveQuizResult(correctAnswers, total, timeTaken).then(pts => showResults(correctAnswers, total, timeTaken, pts));
+    saveQuizResult(correctAnswers, total, timeTaken)
+        .then(pts => showResults(correctAnswers, total, timeTaken, pts));
 }
 
 async function saveQuizResult(correct, total, timeTaken) {
@@ -327,12 +331,12 @@ function showResults(correct, total, timeTaken, pts) {
         endless_quiz:  endlessLives > 0 ? "You Survived! 🎉" : "Game Over 💀"
     };
 
-    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    setTxt("resultsModeTitle", titles[currentMode] || "Quiz Complete!");
-    setTxt("pointsEarned",    `+${pts}`);
-    setTxt("correctAnswers",  correct);
-    setTxt("totalQuestions",  total);
-    setTxt("timeTaken",       formatTime(timeTaken));
+    const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    s("resultsModeTitle", titles[currentMode] || "Quiz Complete!");
+    s("pointsEarned",    `+${pts}`);
+    s("correctAnswers",  correct);
+    s("totalQuestions",  total);
+    s("timeTaken",       formatTime(timeTaken));
 
     resetFeedbackUI();
 }
@@ -351,8 +355,7 @@ function shuffleArray(arr) {
 function setupEventListeners() {
     document.getElementById("quitBtn")?.addEventListener("click", () => {
         if (confirm("Quit and go back to modes?")) {
-            isQuizActive = false;
-            clearInterval(quizTimer);
+            isQuizActive = false; clearInterval(quizTimer);
             window.location.href = "modes.php";
         }
     });
@@ -382,8 +385,7 @@ function setupStarRating() {
 }
 
 function toggleFeedback() {
-    const prompt = document.getElementById("feedbackPrompt");
-    if (prompt) prompt.classList.toggle("open");
+    document.getElementById("feedbackPrompt")?.classList.toggle("open");
 }
 
 function updateCharCount(el) {
@@ -392,8 +394,7 @@ function updateCharCount(el) {
     const len = el.value.length;
     const max = parseInt(el.getAttribute("maxlength") || "500");
     counter.textContent = `${len} / ${max}`;
-    counter.classList.toggle("warn", len > max * 0.8);
-    counter.classList.toggle("over", len >= max);
+    counter.className   = "fb-char-count" + (len >= max ? " over" : len > max * .8 ? " warn" : "");
 }
 
 function resetFeedbackUI() {
@@ -405,31 +406,28 @@ function resetFeedbackUI() {
     const counter  = document.getElementById("charCount");
     const errEl    = document.getElementById("fbTextError");
     const btn      = document.getElementById("feedbackSubmitBtn");
+    const sel      = document.getElementById("feedbackType");
 
-    if (prompt)   { prompt.classList.remove("open"); }
-    if (formWrap) { formWrap.style.display = "flex"; }
-    if (success)  { success.style.display  = "none"; }
-    if (textarea) { textarea.value = ""; }
+    if (prompt)   prompt.classList.remove("open");
+    if (formWrap) formWrap.style.display = "flex";
+    if (success)  success.style.display  = "none";
+    if (textarea) textarea.value = "";
     if (counter)  { counter.textContent = "0 / 500"; counter.className = "fb-char-count"; }
-    if (errEl)    { errEl.classList.remove("show"); }
+    if (errEl)    errEl.classList.remove("show");
     if (btn)      { btn.textContent = "Send Feedback"; btn.disabled = false; }
+    if (sel)      sel.value = "general";
 
-    document.querySelectorAll(".star").forEach(s => s.classList.remove("active", "hovered"));
-    document.getElementById("feedbackRating") && (document.getElementById("feedbackRating").value = "");
-    const sel = document.getElementById("feedbackType");
-    if (sel) sel.value = "general";
+    document.querySelectorAll(".star").forEach(s => s.classList.remove("active","hovered"));
+    const inp = document.getElementById("feedbackRating");
+    if (inp) inp.value = "";
 }
 
 async function submitFeedback() {
-    const text   = document.getElementById("feedbackText")?.value.trim();
-    const type   = document.getElementById("feedbackType")?.value;
-    const errEl  = document.getElementById("fbTextError");
+    const text  = document.getElementById("feedbackText")?.value.trim();
+    const type  = document.getElementById("feedbackType")?.value;
+    const errEl = document.getElementById("fbTextError");
 
-    if (!text) {
-        errEl?.classList.add("show");
-        document.getElementById("feedbackText")?.focus();
-        return;
-    }
+    if (!text) { errEl?.classList.add("show"); document.getElementById("feedbackText")?.focus(); return; }
     errEl?.classList.remove("show");
 
     const btn = document.getElementById("feedbackSubmitBtn");
@@ -441,8 +439,7 @@ async function submitFeedback() {
             body: JSON.stringify({
                 user_id:       typeof SESSION_USER_ID !== "undefined" ? SESSION_USER_ID : null,
                 quiz_id:       currentQuiz?.id || null,
-                feedback_text: text,
-                feedback_type: type,
+                feedback_text: text, feedback_type: type,
                 rating:        selectedRating || null
             })
         });
