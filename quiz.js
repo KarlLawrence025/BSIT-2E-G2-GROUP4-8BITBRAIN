@@ -35,17 +35,30 @@ const MODE_LABELS = {
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
     currentMode = localStorage.getItem("selectedMode") || "single_player";
+    const quizId = parseInt(localStorage.getItem("selectedQuizId") || "0");
+
+    // Guard: if no quiz was chosen, send back to modes
+    if (!quizId || quizId <= 0) {
+        alert("No quiz selected. Please choose a quiz from the Game Modes page.");
+        window.location.href = "modes.php";
+        return;
+    }
+
     setModeSettings();
-    setupEventListeners();
     setupStarRating();
 
-    const quizId = parseInt(localStorage.getItem("selectedQuizId") || "0");
-    if (quizId > 0) {
-        startQuiz(quizId);
-    } else {
-        alert("No quiz selected. Redirecting to modes.");
-        window.location.href = "modes.php";
-    }
+    // Standard mode buttons
+    document.getElementById("quitBtn")?.addEventListener("click", () => {
+        if (confirm("Quit and go back to modes?")) {
+            isQuizActive = false;
+            clearInterval(quizTimer);
+            localStorage.removeItem("selectedQuizId");
+            window.location.href = "modes.php";
+        }
+    });
+    document.getElementById("submitBtn")?.addEventListener("click", () => endQuiz());
+
+    startQuiz(quizId);
 });
 
 function setModeSettings() {
@@ -67,7 +80,8 @@ async function startQuiz(quizId) {
         const data = await res.json();
 
         if (!data.success || !data.questions?.length) {
-            alert(data.message || "Failed to load quiz. Going back to modes.");
+            alert(data.message || "Failed to load quiz.");
+            localStorage.removeItem("selectedQuizId");
             window.location.href = "modes.php";
             return;
         }
@@ -75,27 +89,28 @@ async function startQuiz(quizId) {
         currentQuiz      = data.quiz;
         currentQuestions = data.questions;
 
-        prepareQuestionsForMode();
-        resetQuizState();
-        showSection("quizGame");
-        updateQuizHeader();
-        loadQuestion();
-
-        const timerEl = document.getElementById("timer");
-        if (timerEl) timerEl.style.display = (timedMode || rankedMode || memoryMatchMode) ? "" : "none";
-        if (timedMode || rankedMode || memoryMatchMode) startTimer();
-
+        if (memoryMatchMode) {
+            currentQuestions = createMemoryMatchPairs(currentQuestions);
+            resetQuizState();
+            buildMemoryMatchUI();
+            showSection("memoryGame");
+            startTimer();
+        } else {
+            currentQuestions = shuffleArray([...currentQuestions]);
+            resetQuizState();
+            showSection("quizGame");
+            updateStandardHeader();
+            loadStandardQuestion();
+            const timerEl = document.getElementById("timer");
+            if (timerEl) timerEl.style.display = (timedMode || rankedMode) ? "" : "none";
+            if (timedMode || rankedMode) startTimer();
+        }
     } catch (e) {
         console.error(e);
         alert("Network error. Is XAMPP running?");
+        localStorage.removeItem("selectedQuizId");
         window.location.href = "modes.php";
     }
-}
-
-function prepareQuestionsForMode() {
-    currentQuestions = memoryMatchMode
-        ? createMemoryMatchPairs(currentQuestions)
-        : shuffleArray([...currentQuestions]);
 }
 
 function createMemoryMatchPairs(questions) {
@@ -126,32 +141,144 @@ function resetQuizState() {
 }
 
 function showSection(id) {
-    ["quizLoading","quizGame","quizResults"].forEach(k => {
+    ["quizLoading","quizGame","memoryGame","quizResults"].forEach(k => {
         const el = document.getElementById(k);
         if (!el) return;
         if (k === id) {
-            el.style.display = k === "quizLoading" ? "flex" : (k === "quizResults" ? "flex" : "block");
+            el.style.display = k === "quizLoading" ? "flex"
+                             : k === "quizResults"  ? "flex"
+                             : "block";
         } else {
             el.style.display = "none";
         }
     });
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
-function updateQuizHeader() {
-    const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    s("quizTitle", `${currentQuiz?.title || "Quiz"} — ${MODE_LABELS[currentMode] || currentMode}`);
-    s("score", `Score: ${score}`);
+// ══════════════════════════════════════════════════════
+// MEMORY MATCH
+// ══════════════════════════════════════════════════════
 
-    if (memoryMatchMode)  s("questionCounter", `Pairs: ${matchedPairs} / ${currentQuestions.length / 2}`);
-    else if (endlessMode) s("questionCounter", `Lives: ${endlessLives} | Streak: ${endlessStreak}`);
-    else                  s("questionCounter", `Question ${Math.min(currentQuestionIndex + 1, currentQuestions.length)} of ${currentQuestions.length}`);
+function buildMemoryMatchUI() {
+    const section  = document.getElementById("memoryGame");
+    const total    = currentQuestions.length;
+    const colClass = total <= 4 ? "cols-2" : total <= 6 ? "cols-3" : "cols-4";
+
+    section.innerHTML = `
+        <div class="mm-page">
+            <div class="mm-topbar">
+                <div class="mm-topbar-left">
+                    <div class="mm-title">${escHtml(currentQuiz?.title || "Quiz")} — Memory Match</div>
+                    <div class="mm-stats">
+                        <span class="mm-stat" id="mmPairs">Pairs: 0 / ${total / 2}</span>
+                        <span class="mm-stat timer-stat" id="mmTimer">⏱ 3:00</span>
+                        <span class="mm-stat" id="mmScore">Score: 0</span>
+                    </div>
+                </div>
+                <button class="mm-quit-btn" id="mmQuitBtn">← Back to Modes</button>
+            </div>
+
+            <div class="mm-instructions">
+                Flip two cards to match a
+                <span class="mm-tag term">TERM</span>
+                with its
+                <span class="mm-tag def">DEFINITION</span>
+            </div>
+
+            <div class="mm-grid ${colClass}" id="mmGrid"></div>
+
+            <div class="mm-progress-wrap">
+                <div class="mm-progress-label" id="mmProgressLabel">0 of ${total / 2} pairs found</div>
+                <div class="mm-progress-bar">
+                    <div class="mm-progress-fill" id="mmProgressFill" style="width:0%"></div>
+                </div>
+            </div>
+        </div>`;
+
+    document.getElementById("mmQuitBtn").addEventListener("click", () => {
+        if (confirm("Quit and go back to modes?")) {
+            isQuizActive = false;
+            clearInterval(quizTimer);
+            localStorage.removeItem("selectedQuizId");
+            window.location.href = "modes.php";
+        }
+    });
+
+    const grid = document.getElementById("mmGrid");
+    currentQuestions.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className      = `mm-card ${item.type}`;
+        card.dataset.index  = index;
+        card.dataset.pairId = item.pairId;
+        card.dataset.type   = item.type;
+        card.innerHTML = `
+            <div class="mm-card-inner">
+                <div class="mm-card-front">
+                    <div class="mm-card-question-mark">?</div>
+                </div>
+                <div class="mm-card-back">
+                    <div class="mm-card-type-label">${item.type === "term" ? "TERM" : "DEFINITION"}</div>
+                    <div class="mm-card-text">${escHtml(item.content)}</div>
+                </div>
+            </div>`;
+        card.addEventListener("click", () => flipCard(card));
+        grid.appendChild(card);
+    });
 }
 
-// ── Questions ─────────────────────────────────────────────────────────────────
-function loadQuestion() {
+function updateMMHeader() {
+    const total = currentQuestions.length / 2;
+    const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    s("mmPairs",         `Pairs: ${matchedPairs} / ${total}`);
+    s("mmScore",         `Score: ${score}`);
+    s("mmProgressLabel", `${matchedPairs} of ${total} pairs found`);
+    const fill = document.getElementById("mmProgressFill");
+    if (fill) fill.style.width = `${(matchedPairs / total) * 100}%`;
+}
+
+function flipCard(card) {
     if (!isQuizActive) return;
-    memoryMatchMode ? loadMemoryMatchQuestion() : loadStandardQuestion();
+    if (card.classList.contains("flipped") ||
+        card.classList.contains("matched") ||
+        flippedCards.length >= 2) return;
+
+    card.classList.add("flipped");
+    flippedCards.push(card);
+    if (flippedCards.length === 2) setTimeout(checkMatch, 950);
+}
+
+function checkMatch() {
+    const [c1, c2] = flippedCards;
+    const isMatch  = c1.dataset.pairId === c2.dataset.pairId
+                  && c1.dataset.type   !== c2.dataset.type;
+
+    if (isMatch) {
+        c1.classList.add("matched");
+        c2.classList.add("matched");
+        matchedPairs++;
+        score += 10;
+        correctAnswers++;
+        updateMMHeader();
+        if (matchedPairs === currentQuestions.length / 2) setTimeout(endQuiz, 700);
+    } else {
+        [c1, c2].forEach(c => c.classList.add("shake"));
+        setTimeout(() => {
+            c1.classList.remove("flipped", "shake");
+            c2.classList.remove("flipped", "shake");
+        }, 600);
+    }
+    flippedCards = [];
+}
+
+// ══════════════════════════════════════════════════════
+// STANDARD QUIZ
+// ══════════════════════════════════════════════════════
+
+function updateStandardHeader() {
+    const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    s("quizTitle", `${currentQuiz?.title || "Quiz"} — ${MODE_LABELS[currentMode]}`);
+    s("score", `Score: ${score}`);
+    if (endlessMode) s("questionCounter", `Lives: ${endlessLives} | Streak: ${endlessStreak}`);
+    else s("questionCounter", `Question ${Math.min(currentQuestionIndex + 1, currentQuestions.length)} of ${currentQuestions.length}`);
 }
 
 function loadStandardQuestion() {
@@ -176,66 +303,7 @@ function loadStandardQuestion() {
             oEl.appendChild(div);
         });
     }
-    updateQuizHeader();
-}
-
-function loadMemoryMatchQuestion() {
-    const container = document.getElementById("questionText")?.parentElement;
-    if (!container) return;
-    container.innerHTML = `<h3 style="color:#fff;margin-bottom:20px;">Match each term with its correct definition</h3>`;
-
-    const grid = document.createElement("div");
-    grid.className = "memory-grid";
-
-    currentQuestions.forEach((item, index) => {
-        const card = document.createElement("div");
-        card.className = "memory-card";
-        card.dataset.index  = index;
-        card.dataset.pairId = item.pairId;
-        card.dataset.type   = item.type;
-        card.onclick = () => flipCard(card);
-
-        const lbl = document.createElement("div");
-        lbl.style.cssText = "font-size:10px;opacity:.4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;";
-        lbl.textContent   = item.type === "term" ? "Term" : "Definition";
-
-        const content = document.createElement("div");
-        content.className   = "card-content";
-        content.textContent = item.content;
-
-        card.appendChild(lbl);
-        card.appendChild(content);
-        grid.appendChild(card);
-    });
-    container.appendChild(grid);
-}
-
-function flipCard(card) {
-    if (card.classList.contains("flipped") || card.classList.contains("matched") || flippedCards.length >= 2) return;
-    card.classList.add("flipped");
-    flippedCards.push(card);
-    if (flippedCards.length === 2) setTimeout(checkMatch, 900);
-}
-
-function checkMatch() {
-    const [c1, c2] = flippedCards;
-    const isMatch  = c1.dataset.pairId === c2.dataset.pairId && c1.dataset.type !== c2.dataset.type;
-
-    if (isMatch) {
-        c1.classList.add("matched"); c2.classList.add("matched");
-        matchedPairs++; score += 10; correctAnswers++;
-        updateQuizHeader();
-        if (matchedPairs === currentQuestions.length / 2) endQuiz();
-    } else {
-        c1.style.background = "rgba(248,113,113,.25)";
-        c2.style.background = "rgba(248,113,113,.25)";
-        setTimeout(() => {
-            c1.classList.remove("flipped"); c1.style.background = "";
-            c2.classList.remove("flipped"); c2.style.background = "";
-            if (endlessMode) { endlessLives--; updateQuizHeader(); if (endlessLives <= 0) endQuiz(); }
-        }, 600);
-    }
-    flippedCards = [];
+    updateStandardHeader();
 }
 
 function selectAnswer(answer, question) {
@@ -262,16 +330,17 @@ function selectAnswer(answer, question) {
         if (endlessMode) { endlessLives--; endlessStreak = 0; }
     }
 
-    updateQuizHeader();
+    updateStandardHeader();
     setTimeout(() => {
         if (endlessMode && endlessLives <= 0) { endQuiz(); return; }
         currentQuestionIndex++;
-        currentQuestionIndex >= currentQuestions.length ? endQuiz() : loadQuestion();
+        currentQuestionIndex >= currentQuestions.length ? endQuiz() : loadStandardQuestion();
     }, 900);
 }
 
 // ── Timer ─────────────────────────────────────────────────────────────────────
 function startTimer() {
+    clearInterval(quizTimer);
     let timeLeft = timeLimit;
     updateTimerDisplay(timeLeft);
     quizTimer = setInterval(() => {
@@ -282,11 +351,14 @@ function startTimer() {
 }
 
 function updateTimerDisplay(s) {
-    const el = document.getElementById("timer");
+    const el = memoryMatchMode
+        ? document.getElementById("mmTimer")
+        : document.getElementById("timer");
     if (!el) return;
     const m = Math.floor(s / 60);
     el.textContent = `⏱ ${m}:${(s % 60).toString().padStart(2, "0")}`;
-    el.style.color = s <= 10 ? "#f87171" : "";
+    if (memoryMatchMode) el.classList.toggle("danger", s <= 15);
+    else el.style.color = s <= 10 ? "#f87171" : "";
 }
 
 // ── End Quiz ──────────────────────────────────────────────────────────────────
@@ -299,6 +371,9 @@ function endQuiz() {
     const total     = memoryMatchMode
         ? currentQuestions.length / 2
         : (endlessMode ? userAnswers.length : currentQuestions.length);
+
+    // Clear stored quiz so Back to Modes doesn't re-launch it
+    localStorage.removeItem("selectedQuizId");
 
     saveQuizResult(correctAnswers, total, timeTaken)
         .then(pts => showResults(correctAnswers, total, timeTaken, pts));
@@ -322,7 +397,6 @@ async function saveQuizResult(correct, total, timeTaken) {
 
 function showResults(correct, total, timeTaken, pts) {
     showSection("quizResults");
-
     const titles = {
         single_player: "Quiz Complete! 🎉",
         timed_quiz:    "Time's Up! ⏱️",
@@ -330,14 +404,12 @@ function showResults(correct, total, timeTaken, pts) {
         memory_match:  "Memory Master! 🧠",
         endless_quiz:  endlessLives > 0 ? "You Survived! 🎉" : "Game Over 💀"
     };
-
     const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     s("resultsModeTitle", titles[currentMode] || "Quiz Complete!");
     s("pointsEarned",    `+${pts}`);
     s("correctAnswers",  correct);
     s("totalQuestions",  total);
     s("timeTaken",       formatTime(timeTaken));
-
     resetFeedbackUI();
 }
 
@@ -352,14 +424,10 @@ function shuffleArray(arr) {
     return arr;
 }
 
-function setupEventListeners() {
-    document.getElementById("quitBtn")?.addEventListener("click", () => {
-        if (confirm("Quit and go back to modes?")) {
-            isQuizActive = false; clearInterval(quizTimer);
-            window.location.href = "modes.php";
-        }
-    });
-    document.getElementById("submitBtn")?.addEventListener("click", () => endQuiz());
+function escHtml(str) {
+    const d = document.createElement("div");
+    d.appendChild(document.createTextNode(str || ""));
+    return d.innerHTML;
 }
 
 // ── Feedback ──────────────────────────────────────────────────────────────────
@@ -399,27 +467,26 @@ function updateCharCount(el) {
 
 function resetFeedbackUI() {
     selectedRating = 0;
-    const prompt   = document.getElementById("feedbackPrompt");
-    const formWrap = document.getElementById("fbFormWrap");
-    const success  = document.getElementById("fbSuccess");
-    const textarea = document.getElementById("feedbackText");
-    const counter  = document.getElementById("charCount");
-    const errEl    = document.getElementById("fbTextError");
-    const btn      = document.getElementById("feedbackSubmitBtn");
-    const sel      = document.getElementById("feedbackType");
+    document.getElementById("feedbackPrompt")?.classList.remove("open");
+    const fw = document.getElementById("fbFormWrap");
+    const fs = document.getElementById("fbSuccess");
+    if (fw) fw.style.display = "flex";
+    if (fs) fs.style.display = "none";
 
-    if (prompt)   prompt.classList.remove("open");
-    if (formWrap) formWrap.style.display = "flex";
-    if (success)  success.style.display  = "none";
-    if (textarea) textarea.value = "";
-    if (counter)  { counter.textContent = "0 / 500"; counter.className = "fb-char-count"; }
-    if (errEl)    errEl.classList.remove("show");
-    if (btn)      { btn.textContent = "Send Feedback"; btn.disabled = false; }
-    if (sel)      sel.value = "general";
-
-    document.querySelectorAll(".star").forEach(s => s.classList.remove("active","hovered"));
+    const ta  = document.getElementById("feedbackText");
+    const cnt = document.getElementById("charCount");
+    const err = document.getElementById("fbTextError");
+    const btn = document.getElementById("feedbackSubmitBtn");
+    const sel = document.getElementById("feedbackType");
     const inp = document.getElementById("feedbackRating");
+
+    if (ta)  ta.value = "";
+    if (cnt) { cnt.textContent = "0 / 500"; cnt.className = "fb-char-count"; }
+    if (err) err.classList.remove("show");
+    if (btn) { btn.textContent = "Send Feedback"; btn.disabled = false; }
+    if (sel) sel.value = "general";
     if (inp) inp.value = "";
+    document.querySelectorAll(".star").forEach(s => s.classList.remove("active","hovered"));
 }
 
 async function submitFeedback() {
@@ -444,7 +511,6 @@ async function submitFeedback() {
             })
         });
         const result = await res.json();
-
         if (result.success) {
             document.getElementById("fbFormWrap").style.display = "none";
             document.getElementById("fbSuccess").style.display  = "flex";
