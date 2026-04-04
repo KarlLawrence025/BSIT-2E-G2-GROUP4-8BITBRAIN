@@ -11,7 +11,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Bitcount+Single:wght@100..900&display=swap" rel="stylesheet" />
     <style>
-      /* ── Page ── */
       .modes-page {
         min-height: 100vh;
         padding: 100px 24px 60px;
@@ -35,7 +34,6 @@
         text-align: center;
       }
 
-      /* ── Mode cards ── */
       .modes-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -54,6 +52,7 @@
         transition: transform .25s, border-color .25s, box-shadow .25s;
         text-align: center;
         user-select: none;
+        position: relative;
       }
 
       .mode-card:hover {
@@ -69,6 +68,15 @@
       .mode-card[data-mode="ranked_quiz"]   { --mc:#ef4444; --mg:rgba(239,68,68,.3);  }
       .mode-card[data-mode="memory_match"]  { --mc:#10b981; --mg:rgba(16,185,129,.3); }
       .mode-card[data-mode="endless_quiz"]  { --mc:#8b5cf6; --mg:rgba(139,92,246,.3); }
+
+      /* Special glow ring for endless */
+      .mode-card[data-mode="endless_quiz"] {
+        border-color: rgba(139,92,246,.3);
+      }
+      .mode-card[data-mode="endless_quiz"]:hover {
+        border-color: #8b5cf6;
+        box-shadow: 0 16px 40px rgba(0,0,0,.4), 0 0 40px rgba(139,92,246,.35);
+      }
 
       .mode-icon {
         font-size: 50px;
@@ -104,7 +112,22 @@
         letter-spacing: .5px;
       }
 
-      /* ── Quiz selection overlay ── */
+      /* "No quiz selection needed" tag for endless */
+      .mode-special-tag {
+        position: absolute;
+        top: -10px;
+        right: 16px;
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 3px 10px;
+        border-radius: 20px;
+        letter-spacing: .5px;
+        box-shadow: 0 2px 10px rgba(139,92,246,.5);
+      }
+
+      /* ── Quiz overlay ── */
       .quiz-overlay {
         display: none;
         position: fixed;
@@ -136,7 +159,6 @@
         to   { opacity:1; transform:translateY(0)    scale(1);   }
       }
 
-      /* Panel header */
       .panel-header {
         display: flex;
         justify-content: space-between;
@@ -144,45 +166,27 @@
         margin-bottom: 6px;
       }
 
-      .panel-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #fff;
-      }
-
+      .panel-title { font-size: 20px; font-weight: 700; color: #fff; }
       .panel-title span { color: #ff2fb3; }
-
-      .panel-sub {
-        font-size: 13px;
-        color: rgba(255,255,255,.4);
-        margin-bottom: 24px;
-      }
+      .panel-sub { font-size: 13px; color: rgba(255,255,255,.4); margin-bottom: 24px; }
 
       .btn-panel-close {
-        width: 36px;
-        height: 36px;
+        width: 36px; height: 36px;
         border-radius: 50%;
         border: 1px solid rgba(255,255,255,.18);
         background: rgba(255,255,255,.06);
-        color: #fff;
-        font-size: 18px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        color: #fff; font-size: 18px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
         transition: background .2s, border-color .2s;
-        flex-shrink: 0;
       }
       .btn-panel-close:hover { background: rgba(255,47,179,.25); border-color: #ff2fb3; }
 
-      /* Quiz list grid */
       .quiz-list {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 14px;
       }
 
-      /* Individual quiz card */
       .quiz-pick-card {
         background: rgba(255,255,255,.04);
         border: 1.5px solid rgba(255,255,255,.1);
@@ -190,11 +194,8 @@
         padding: 20px 18px;
         cursor: pointer;
         transition: border-color .22s, background .22s, transform .22s, box-shadow .22s;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+        display: flex; flex-direction: column; gap: 8px;
       }
-
       .quiz-pick-card:hover {
         border-color: #ff2fb3;
         background: rgba(255,47,179,.07);
@@ -202,64 +203,21 @@
         box-shadow: 0 8px 24px rgba(255,47,179,.18);
       }
 
-      .quiz-pick-card:active { transform: translateY(-1px); }
-
-      .qpc-title {
-        font-size: 15px;
-        font-weight: 700;
-        color: #fff;
-        line-height: 1.35;
-      }
-
-      .qpc-meta {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .qpc-category {
-        font-size: 12px;
-        color: #ff2fb3;
-        font-weight: 600;
-      }
-
-      .qpc-diff {
-        font-size: 11px;
-        font-weight: 700;
-        padding: 2px 8px;
-        border-radius: 6px;
-        color: #000;
-      }
-      .qpc-diff.easy   { background: #4ade80; }
-      .qpc-diff.medium { background: #fbbf24; }
-      .qpc-diff.hard   { background: #f87171; }
-
-      .qpc-count {
-        font-size: 12px;
-        color: rgba(255,255,255,.4);
-      }
-
-      .qpc-arrow {
-        margin-top: 4px;
-        text-align: right;
-        font-size: 16px;
-        color: rgba(255,47,179,.45);
-        transition: transform .2s, color .2s;
-      }
+      .qpc-title { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.35; }
+      .qpc-meta  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .qpc-category { font-size: 12px; color: #ff2fb3; font-weight: 600; }
+      .qpc-diff { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; color: #000; }
+      .qpc-diff.easy { background:#4ade80; } .qpc-diff.medium { background:#fbbf24; } .qpc-diff.hard { background:#f87171; }
+      .qpc-count { font-size: 12px; color: rgba(255,255,255,.4); }
+      .qpc-arrow { margin-top: 4px; text-align: right; font-size: 16px; color: rgba(255,47,179,.45); transition: transform .2s, color .2s; }
       .quiz-pick-card:hover .qpc-arrow { transform: translateX(5px); color: #ff2fb3; }
 
-      /* Panel states */
       .panel-state {
-        grid-column: 1 / -1;
-        text-align: center;
-        padding: 56px 20px;
-        color: rgba(255,255,255,.45);
+        grid-column: 1/-1; text-align: center; padding: 56px 20px; color: rgba(255,255,255,.45);
       }
       .panel-state-icon { font-size: 40px; margin-bottom: 12px; }
       .panel-state p    { font-size: 15px; line-height: 1.6; }
 
-      /* ── Responsive ── */
       @media (max-width: 680px) {
         .modes-grid { grid-template-columns: 1fr; }
         .quiz-panel { padding: 22px 16px; }
@@ -312,10 +270,12 @@
             <span class="mode-badge">3 min</span>
           </div>
 
-          <div class="mode-card" data-mode="endless_quiz" onclick="openPanel('endless_quiz')">
+          <!-- Endless — goes directly, no quiz picker needed -->
+          <div class="mode-card" data-mode="endless_quiz" onclick="launchEndless()">
+            <span class="mode-special-tag">✨ All questions</span>
             <span class="mode-icon">♾️</span>
             <div class="mode-name">Endless Quiz</div>
-            <div class="mode-desc">Answer until you run out of 3 lives. How far can your streak reach?</div>
+            <div class="mode-desc">Every question in the database, shuffled and non-stop. 3 lives — how far can you go?</div>
             <span class="mode-badge">3 lives</span>
           </div>
 
@@ -323,23 +283,17 @@
       </div>
     </main>
 
-    <!-- ── Quiz Selection Overlay ── -->
+    <!-- Quiz Selection Overlay (for non-endless modes) -->
     <div class="quiz-overlay" id="quizOverlay">
-      <div class="quiz-panel" id="quizPanel">
-
+      <div class="quiz-panel">
         <div class="panel-header">
           <div class="panel-title">Select a Quiz — <span id="panelModeName">Mode</span></div>
-          <button class="btn-panel-close" onclick="closePanel()" title="Close">✕</button>
+          <button class="btn-panel-close" onclick="closePanel()">✕</button>
         </div>
         <div class="panel-sub" id="panelSub">Loading quizzes...</div>
-
         <div class="quiz-list" id="quizList">
-          <div class="panel-state">
-            <div class="panel-state-icon">⏳</div>
-            <p>Loading...</p>
-          </div>
+          <div class="panel-state"><div class="panel-state-icon">⏳</div><p>Loading...</p></div>
         </div>
-
       </div>
     </div>
 
@@ -352,17 +306,18 @@
         endless_quiz:  'Endless Quiz'
       };
 
-      let activeMode = null;
+      /* ── Endless goes straight to its own page ── */
+      function launchEndless() {
+        localStorage.setItem('selectedMode', 'endless_quiz');
+        localStorage.removeItem('selectedQuizId');
+        window.location.href = 'endless.php';
+      }
 
-      /* ── Open panel ── */
+      /* ── Other modes open the quiz picker ── */
       async function openPanel(mode) {
-        activeMode = mode;
-
-        // Clear any stale quiz selection from a previous session
         localStorage.removeItem('selectedQuizId');
         localStorage.setItem('selectedMode', mode);
 
-        // Update header
         document.getElementById('panelModeName').textContent = MODE_LABELS[mode] || mode;
         document.getElementById('panelSub').textContent      = 'Loading quizzes...';
         document.getElementById('quizList').innerHTML = `
@@ -371,27 +326,19 @@
             <p>Loading <strong>${MODE_LABELS[mode]}</strong> quizzes...</p>
           </div>`;
 
-        // Show overlay
         document.getElementById('quizOverlay').classList.add('open');
         document.body.style.overflow = 'hidden';
 
-        // Fetch quizzes for this mode
         try {
           const res  = await fetch('api/get_quizzes.php?mode=' + encodeURIComponent(mode));
           const data = await res.json();
-
-          if (!data.success) {
-            showPanelError('Could not load quizzes. Is XAMPP running?');
-            return;
-          }
-
+          if (!data.success) { showPanelError('Could not load quizzes. Is XAMPP running?'); return; }
           renderQuizList(data.data, mode);
         } catch (e) {
           showPanelError('Network error. Make sure XAMPP Apache is running.');
         }
       }
 
-      /* ── Render quiz cards ── */
       function renderQuizList(quizzes, mode) {
         const list = document.getElementById('quizList');
         const sub  = document.getElementById('panelSub');
@@ -424,41 +371,28 @@
         }).join('');
       }
 
-      /* ── Launch quiz ── */
       function launchQuiz(quizId, mode) {
-        // Store BOTH values before navigating
         localStorage.setItem('selectedMode',   mode);
         localStorage.setItem('selectedQuizId', quizId);
         window.location.href = 'quiz.php';
       }
 
-      /* ── Close panel ── */
       function closePanel() {
         document.getElementById('quizOverlay').classList.remove('open');
         document.body.style.overflow = '';
-        activeMode = null;
-        // Clear any leftover quiz id so quiz.php can't accidentally start one
         localStorage.removeItem('selectedQuizId');
       }
 
-      /* ── Click outside panel to close ── */
       document.getElementById('quizOverlay').addEventListener('click', function(e) {
         if (e.target === this) closePanel();
       });
 
-      /* ── ESC key ── */
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closePanel();
-      });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
 
-      /* ── Helpers ── */
       function showPanelError(msg) {
         document.getElementById('panelSub').textContent = '';
         document.getElementById('quizList').innerHTML   = `
-          <div class="panel-state">
-            <div class="panel-state-icon">⚠️</div>
-            <p>${msg}</p>
-          </div>`;
+          <div class="panel-state"><div class="panel-state-icon">⚠️</div><p>${msg}</p></div>`;
       }
 
       function esc(s) {
