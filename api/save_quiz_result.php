@@ -15,14 +15,17 @@ if (!$input) {
 }
 
 // ── Inputs ────────────────────────────────────────────────────────────────────
-$quiz_id        = intval($input['quiz_id']         ?? 0);
-$mode           = $conn->real_escape_string($input['mode'] ?? 'single_player');
-$correct        = intval($input['correct_answers'] ?? 0);
-$total          = intval($input['total_questions'] ?? 0);
-$time_taken     = intval($input['time_taken']      ?? 0);
-$time_limit     = intval($input['time_limit']      ?? 0);   // sent by quiz.js
+$quiz_id    = intval($input['quiz_id']         ?? 0);
+$mode       = $conn->real_escape_string($input['mode'] ?? 'single_player');
+$correct    = intval($input['correct_answers'] ?? 0);
+$total      = intval($input['total_questions'] ?? 0);
+$time_taken = intval($input['time_taken']      ?? 0);
+$time_limit = intval($input['time_limit']      ?? 0);
 
-// User — prefer session
+// points_earned can be pre-calculated by endless.js, otherwise compute here
+$points_override = isset($input['points_earned']) ? intval($input['points_earned']) : null;
+
+// User — prefer session, fall back to payload
 $user_id = null;
 if (isset($_SESSION['user_id'])) {
     $user_id = intval($_SESSION['user_id']);
@@ -35,18 +38,19 @@ if (!$user_id) {
     exit;
 }
 
-// ── Fetch quiz difficulty ────────────────────────────────────────────────────
-$qRow = $conn->query("SELECT difficulty FROM quizzes WHERE id = $quiz_id");
+// ── Difficulty multiplier ────────────────────────────────────────────────────
 $difficulty = 'medium';
-if ($qRow && $qRow->num_rows > 0) {
-    $difficulty = $qRow->fetch_assoc()['difficulty'];
+if ($quiz_id > 0) {
+    $qRow = $conn->query("SELECT difficulty FROM quizzes WHERE id = $quiz_id");
+    if ($qRow && $qRow->num_rows > 0) {
+        $difficulty = $qRow->fetch_assoc()['difficulty'];
+    }
 }
 
-// ── Difficulty multiplier ────────────────────────────────────────────────────
 $diff_mult = match($difficulty) {
-    'easy' => 1.0,
-    'hard' => 2.0,
-    default => 1.5,   // medium
+    'easy'  => 1.0,
+    'hard'  => 2.0,
+    default => 1.5,
 };
 
 // ── Mode multiplier ──────────────────────────────────────────────────────────
@@ -55,95 +59,108 @@ $mode_mult = match($mode) {
     'memory_match' => 1.25,
     'endless_quiz' => 1.5,
     'ranked_quiz'  => 2.0,
-    default        => 1.0,   // single_player
+    default        => 1.0,
 };
 
-// ── Base points ──────────────────────────────────────────────────────────────
-$base_points = $correct * 10;
+// ── Calculate points (use override if provided by client, e.g. endless mode) ─
+if ($points_override !== null && $points_override > 0) {
+    $points = $points_override;
+} else {
+    $points = (int) round($correct * 10 * $diff_mult * $mode_mult);
 
-// ── Apply multipliers ────────────────────────────────────────────────────────
-$points = (int) round($base_points * $diff_mult * $mode_mult);
+    // Perfect score bonus
+    if ($total > 0 && $correct === $total) {
+        $points += 50;
+    }
 
-// ── Perfect score bonus ──────────────────────────────────────────────────────
-if ($total > 0 && $correct === $total) {
-    $points += 50;
-}
-
-// ── Time bonus (timed & ranked modes only) ───────────────────────────────────
-if ($time_limit > 0 && in_array($mode, ['timed_quiz', 'ranked_quiz'])) {
-    $time_remaining = $time_limit - $time_taken;
-    $time_pct       = $time_remaining / $time_limit;
-
-    if ($time_pct > 0.80) {
-        $points += 30;
-    } elseif ($time_pct > 0.50) {
-        $points += 15;
-    } elseif ($time_pct > 0.20) {
-        $points += 5;
+    // Time bonus (timed & ranked modes only)
+    if ($time_limit > 0 && in_array($mode, ['timed_quiz', 'ranked_quiz'])) {
+        $time_remaining = $time_limit - $time_taken;
+        $time_pct       = $time_remaining / $time_limit;
+        if      ($time_pct > 0.80) $points += 30;
+        elseif  ($time_pct > 0.50) $points += 15;
+        elseif  ($time_pct > 0.20) $points += 5;
     }
 }
 
-// ── Fetch user info ───────────────────────────────────────────────────────────
-$uRow     = $conn->query("SELECT username, fullname FROM users WHERE id = $user_id");
-$uData    = $uRow ? $uRow->fetch_assoc() : null;
-$username = $conn->real_escape_string($uData['username'] ?? '');
-$fullname = $conn->real_escape_string($uData['fullname'] ?? '');
-
-// ── Save attempt ──────────────────────────────────────────────────────────────
+// ── Save attempt row ──────────────────────────────────────────────────────────
 $stmt = $conn->prepare(
     "INSERT INTO quiz_attempts
         (user_id, quiz_id, mode, difficulty, correct, total, time_taken, points_earned)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 );
-$stmt->bind_param("iissiiid", $user_id, $quiz_id, $mode, $difficulty,
-                               $correct, $total, $time_taken, $points);
+$stmt->bind_param("iissiiid",
+    $user_id, $quiz_id, $mode, $difficulty,
+    $correct, $total, $time_taken, $points
+);
+
 if (!$stmt->execute()) {
     echo json_encode(["success" => false, "message" => "Error saving attempt: " . $stmt->error]);
-    $stmt->close(); $conn->close(); exit;
+    $stmt->close();
+    $conn->close();
+    exit;
 }
 $stmt->close();
 
-// ── Upsert leaderboard (accumulated total per user) ──────────────────────────
-// Check if user already has a leaderboard row
-$existing = $conn->query(
-    "SELECT id, total_points, total_correct, total_questions, attempts
-     FROM leaderboard WHERE user_id = $user_id"
+// ── Upsert leaderboard (for backward compat — re-sum from quiz_attempts) ─────
+// Re-calculate the true accumulated totals from quiz_attempts so the
+// leaderboard table stays consistent even if old data was wrong.
+$uRow = $conn->query(
+    "SELECT
+        SUM(points_earned) AS pts,
+        SUM(correct)       AS corr,
+        SUM(total)         AS tot,
+        COUNT(id)          AS atts
+     FROM quiz_attempts
+     WHERE user_id = $user_id"
 );
 
-if ($existing && $existing->num_rows > 0) {
-    $row = $existing->fetch_assoc();
-    $new_total_points    = $row['total_points']    + $points;
-    $new_total_correct   = $row['total_correct']   + $correct;
-    $new_total_questions = $row['total_questions'] + $total;
-    $new_attempts        = $row['attempts']        + 1;
-    $lid                 = $row['id'];
+$uData = $uRow ? $uRow->fetch_assoc() : null;
 
-    $conn->query(
-        "UPDATE leaderboard SET
-            total_points    = $new_total_points,
-            total_correct   = $new_total_correct,
-            total_questions = $new_total_questions,
-            attempts        = $new_attempts,
-            username        = '$username',
-            fullname        = '$fullname',
-            updated_at      = current_timestamp()
-         WHERE id = $lid"
-    );
-} else {
-    $conn->query(
-        "INSERT INTO leaderboard
-            (user_id, username, fullname, total_points, total_correct, total_questions, attempts)
-         VALUES
-            ($user_id, '$username', '$fullname', $points, $correct, $total, 1)"
-    );
+if ($uData) {
+    $acc_pts  = intval($uData['pts']);
+    $acc_corr = intval($uData['corr']);
+    $acc_tot  = intval($uData['tot']);
+    $acc_atts = intval($uData['atts']);
+
+    // Get username/fullname
+    $uInfo    = $conn->query("SELECT username, fullname FROM users WHERE id = $user_id");
+    $uInfoRow = $uInfo ? $uInfo->fetch_assoc() : null;
+    $username = $conn->real_escape_string($uInfoRow['username'] ?? '');
+    $fullname = $conn->real_escape_string($uInfoRow['fullname'] ?? '');
+
+    // Check if leaderboard row exists
+    $exists = $conn->query("SELECT id FROM leaderboard WHERE user_id = $user_id");
+
+    if ($exists && $exists->num_rows > 0) {
+        // UPDATE with true sums — never increment, always replace with real totals
+        $conn->query(
+            "UPDATE leaderboard SET
+                total_points    = $acc_pts,
+                total_correct   = $acc_corr,
+                total_questions = $acc_tot,
+                attempts        = $acc_atts,
+                username        = '$username',
+                fullname        = '$fullname',
+                updated_at      = current_timestamp()
+             WHERE user_id = $user_id"
+        );
+    } else {
+        $conn->query(
+            "INSERT INTO leaderboard
+                (user_id, username, fullname, total_points, total_correct, total_questions, attempts)
+             VALUES
+                ($user_id, '$username', '$fullname', $acc_pts, $acc_corr, $acc_tot, $acc_atts)"
+        );
+    }
 }
 
 echo json_encode([
-    "success"      => true,
-    "points_earned"=> $points,
-    "difficulty"   => $difficulty,
-    "mode"         => $mode,
-    "message"      => "Result saved — you earned $points points!"
+    "success"       => true,
+    "points_earned" => $points,
+    "difficulty"    => $difficulty,
+    "mode"          => $mode,
+    "message"       => "Result saved — you earned $points points!"
 ]);
 
 $conn->close();
