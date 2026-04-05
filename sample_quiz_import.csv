@@ -1,0 +1,9 @@
+title,category,difficulty,mode,question,optionA,optionB,optionC,optionD,correct
+Philippine History,History,easy,single_player,Who was the first President of the Philippines?,Emilio Aguinaldo,Manuel Quezon,Jose Rizal,Andres Bonifacio,A
+Philippine History,History,easy,single_player,When did the Philippines gain independence from the US?,1898,1946,1935,1972,B
+Philippine History,History,easy,single_player,Who is the national hero of the Philippines?,Jose Rizal,Andres Bonifacio,Apolinario Mabini,Lapu-Lapu,A
+Philippine History,History,easy,single_player,Which country colonized the Philippines for 333 years?,Spain,United States,Japan,Portugal,A
+Programming Basics,Computer Science,medium,timed_quiz,What does HTML stand for?,HyperText Markup Language,High Transfer Markup Language,HyperText Machine Language,Home Tool Markup Language,A
+Programming Basics,Computer Science,medium,timed_quiz,Which symbol is used for single-line comments in Python?,//,#,--,**,B
+Programming Basics,Computer Science,medium,timed_quiz,What is a variable?,A fixed constant value,A container that stores data,A type of loop,A function,B
+Programming Basics,Computer Science,medium,timed_quiz,What does a loop do?,Stops the program,Runs code once,Repeats code multiple times,Defines a variable,C
