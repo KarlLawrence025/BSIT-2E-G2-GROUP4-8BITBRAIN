@@ -7,34 +7,17 @@
         <a href="leaderboards.php">Leaderboards</a>
     <?php endif; ?>
 
-    <!-- Right-side dynamic buttons -->
     <div class="navbar">
-
         <?php if (isset($_SESSION['logged_in'])): ?>
-
             <?php if ($_SESSION['account_type'] === 'admin'): ?>
-                <a href="dashboard-admin.php">
-                    Admin Dashboard
-                </a>
-                <a href="api/logout.php">
-                    <button class="btn-login logout">Logout</button>
-                </a>
+                <a href="dashboard-admin.php">Admin Dashboard</a>
+                <a href="api/logout.php"><button class="btn-login logout">Logout</button></a>
             <?php else: ?>
-                <a href="dashboard-user.php">
-                    My Profile
-                </a>
-                <a href="api/logout.php">
-                    Logout
-                </a>
-
+                <a href="dashboard-user.php">My Profile</a>
+                <a href="api/logout.php">Logout</a>
             <?php endif; ?>
-
         <?php else: ?>
-            <a href="login.html">
-                <button class="btn-login">Login</button>
-            </a>
+            <a href="login.html"><button class="btn-login">Login</button></a>
         <?php endif; ?>
-
     </div>
-
 </nav>

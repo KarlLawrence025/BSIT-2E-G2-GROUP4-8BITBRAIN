@@ -35,30 +35,21 @@ const MODE_LABELS = {
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
     currentMode = localStorage.getItem("selectedMode") || "single_player";
-    const quizId = parseInt(localStorage.getItem("selectedQuizId") || "0");
-
-    // Guard: if no quiz was chosen, send back to modes
-    if (!quizId || quizId <= 0) {
-        alert("No quiz selected. Please choose a quiz from the Game Modes page.");
-        window.location.href = "modes.php";
-        return;
-    }
-
     setModeSettings();
     setupStarRating();
 
-    // Standard mode buttons
+    // standard mode quit button
     document.getElementById("quitBtn")?.addEventListener("click", () => {
         if (confirm("Quit and go back to modes?")) {
-            isQuizActive = false;
-            clearInterval(quizTimer);
-            localStorage.removeItem("selectedQuizId");
+            isQuizActive = false; clearInterval(quizTimer);
             window.location.href = "modes.php";
         }
     });
     document.getElementById("submitBtn")?.addEventListener("click", () => endQuiz());
 
-    startQuiz(quizId);
+    const quizId = parseInt(localStorage.getItem("selectedQuizId") || "0");
+    if (quizId > 0) startQuiz(quizId);
+    else { alert("No quiz selected."); window.location.href = "modes.php"; }
 });
 
 function setModeSettings() {
@@ -81,7 +72,6 @@ async function startQuiz(quizId) {
 
         if (!data.success || !data.questions?.length) {
             alert(data.message || "Failed to load quiz.");
-            localStorage.removeItem("selectedQuizId");
             window.location.href = "modes.php";
             return;
         }
@@ -108,7 +98,6 @@ async function startQuiz(quizId) {
     } catch (e) {
         console.error(e);
         alert("Network error. Is XAMPP running?");
-        localStorage.removeItem("selectedQuizId");
         window.location.href = "modes.php";
     }
 }
@@ -144,27 +133,27 @@ function showSection(id) {
     ["quizLoading","quizGame","memoryGame","quizResults"].forEach(k => {
         const el = document.getElementById(k);
         if (!el) return;
-        if (k === id) {
-            el.style.display = k === "quizLoading" ? "flex"
-                             : k === "quizResults"  ? "flex"
-                             : "block";
-        } else {
-            el.style.display = "none";
-        }
+        el.style.display = k === id
+            ? (k === "quizLoading" ? "flex" : k === "quizResults" ? "flex" : "block")
+            : "none";
     });
 }
 
 // ══════════════════════════════════════════════════════
-// MEMORY MATCH
+// MEMORY MATCH UI
 // ══════════════════════════════════════════════════════
 
 function buildMemoryMatchUI() {
-    const section  = document.getElementById("memoryGame");
+    const section = document.getElementById("memoryGame");
+
+    // Pick column class based on card count
     const total    = currentQuestions.length;
     const colClass = total <= 4 ? "cols-2" : total <= 6 ? "cols-3" : "cols-4";
 
     section.innerHTML = `
         <div class="mm-page">
+
+            <!-- Top bar -->
             <div class="mm-topbar">
                 <div class="mm-topbar-left">
                     <div class="mm-title">${escHtml(currentQuiz?.title || "Quiz")} — Memory Match</div>
@@ -177,6 +166,7 @@ function buildMemoryMatchUI() {
                 <button class="mm-quit-btn" id="mmQuitBtn">← Back to Modes</button>
             </div>
 
+            <!-- Instructions -->
             <div class="mm-instructions">
                 Flip two cards to match a
                 <span class="mm-tag term">TERM</span>
@@ -184,25 +174,28 @@ function buildMemoryMatchUI() {
                 <span class="mm-tag def">DEFINITION</span>
             </div>
 
+            <!-- Card grid -->
             <div class="mm-grid ${colClass}" id="mmGrid"></div>
 
+            <!-- Progress bar -->
             <div class="mm-progress-wrap">
                 <div class="mm-progress-label" id="mmProgressLabel">0 of ${total / 2} pairs found</div>
                 <div class="mm-progress-bar">
                     <div class="mm-progress-fill" id="mmProgressFill" style="width:0%"></div>
                 </div>
             </div>
+
         </div>`;
 
+    // Quit button
     document.getElementById("mmQuitBtn").addEventListener("click", () => {
         if (confirm("Quit and go back to modes?")) {
-            isQuizActive = false;
-            clearInterval(quizTimer);
-            localStorage.removeItem("selectedQuizId");
+            isQuizActive = false; clearInterval(quizTimer);
             window.location.href = "modes.php";
         }
     });
 
+    // Build cards
     const grid = document.getElementById("mmGrid");
     currentQuestions.forEach((item, index) => {
         const card = document.createElement("div");
@@ -210,6 +203,7 @@ function buildMemoryMatchUI() {
         card.dataset.index  = index;
         card.dataset.pairId = item.pairId;
         card.dataset.type   = item.type;
+
         card.innerHTML = `
             <div class="mm-card-inner">
                 <div class="mm-card-front">
@@ -220,6 +214,7 @@ function buildMemoryMatchUI() {
                     <div class="mm-card-text">${escHtml(item.content)}</div>
                 </div>
             </div>`;
+
         card.addEventListener("click", () => flipCard(card));
         grid.appendChild(card);
     });
@@ -227,14 +222,19 @@ function buildMemoryMatchUI() {
 
 function updateMMHeader() {
     const total = currentQuestions.length / 2;
-    const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    s("mmPairs",         `Pairs: ${matchedPairs} / ${total}`);
-    s("mmScore",         `Score: ${score}`);
-    s("mmProgressLabel", `${matchedPairs} of ${total} pairs found`);
-    const fill = document.getElementById("mmProgressFill");
-    if (fill) fill.style.width = `${(matchedPairs / total) * 100}%`;
+
+    const pairsEl    = document.getElementById("mmPairs");
+    const scoreEl    = document.getElementById("mmScore");
+    const progLabel  = document.getElementById("mmProgressLabel");
+    const progFill   = document.getElementById("mmProgressFill");
+
+    if (pairsEl)   pairsEl.textContent   = `Pairs: ${matchedPairs} / ${total}`;
+    if (scoreEl)   scoreEl.textContent   = `Score: ${score}`;
+    if (progLabel) progLabel.textContent = `${matchedPairs} of ${total} pairs found`;
+    if (progFill)  progFill.style.width  = `${(matchedPairs / total) * 100}%`;
 }
 
+// ── Card flip logic ───────────────────────────────────────────────────────────
 function flipCard(card) {
     if (!isQuizActive) return;
     if (card.classList.contains("flipped") ||
@@ -243,7 +243,10 @@ function flipCard(card) {
 
     card.classList.add("flipped");
     flippedCards.push(card);
-    if (flippedCards.length === 2) setTimeout(checkMatch, 950);
+
+    if (flippedCards.length === 2) {
+        setTimeout(checkMatch, 950);
+    }
 }
 
 function checkMatch() {
@@ -258,7 +261,10 @@ function checkMatch() {
         score += 10;
         correctAnswers++;
         updateMMHeader();
-        if (matchedPairs === currentQuestions.length / 2) setTimeout(endQuiz, 700);
+
+        if (matchedPairs === currentQuestions.length / 2) {
+            setTimeout(endQuiz, 700);
+        }
     } else {
         [c1, c2].forEach(c => c.classList.add("shake"));
         setTimeout(() => {
@@ -266,6 +272,7 @@ function checkMatch() {
             c2.classList.remove("flipped", "shake");
         }, 600);
     }
+
     flippedCards = [];
 }
 
@@ -292,7 +299,7 @@ function loadStandardQuestion() {
     if (oEl) {
         oEl.innerHTML = "";
         if (!question.answers?.length) {
-            oEl.innerHTML = `<p style="color:#f87171;">No answer options for this question.</p>`;
+            oEl.innerHTML = `<p style="color:#f87171;">No answer options.</p>`;
             return;
         }
         shuffleArray([...question.answers]).forEach(answer => {
@@ -343,6 +350,7 @@ function startTimer() {
     clearInterval(quizTimer);
     let timeLeft = timeLimit;
     updateTimerDisplay(timeLeft);
+
     quizTimer = setInterval(() => {
         timeLeft--;
         updateTimerDisplay(timeLeft);
@@ -351,14 +359,20 @@ function startTimer() {
 }
 
 function updateTimerDisplay(s) {
+    // Memory match uses its own timer element
     const el = memoryMatchMode
         ? document.getElementById("mmTimer")
         : document.getElementById("timer");
     if (!el) return;
+
     const m = Math.floor(s / 60);
     el.textContent = `⏱ ${m}:${(s % 60).toString().padStart(2, "0")}`;
-    if (memoryMatchMode) el.classList.toggle("danger", s <= 15);
-    else el.style.color = s <= 10 ? "#f87171" : "";
+
+    if (memoryMatchMode) {
+        el.classList.toggle("danger", s <= 15);
+    } else {
+        el.style.color = s <= 10 ? "#f87171" : "";
+    }
 }
 
 // ── End Quiz ──────────────────────────────────────────────────────────────────
@@ -371,9 +385,6 @@ function endQuiz() {
     const total     = memoryMatchMode
         ? currentQuestions.length / 2
         : (endlessMode ? userAnswers.length : currentQuestions.length);
-
-    // Clear stored quiz so Back to Modes doesn't re-launch it
-    localStorage.removeItem("selectedQuizId");
 
     saveQuizResult(correctAnswers, total, timeTaken)
         .then(pts => showResults(correctAnswers, total, timeTaken, pts));
@@ -397,6 +408,7 @@ async function saveQuizResult(correct, total, timeTaken) {
 
 function showResults(correct, total, timeTaken, pts) {
     showSection("quizResults");
+
     const titles = {
         single_player: "Quiz Complete! 🎉",
         timed_quiz:    "Time's Up! ⏱️",
@@ -404,12 +416,14 @@ function showResults(correct, total, timeTaken, pts) {
         memory_match:  "Memory Master! 🧠",
         endless_quiz:  endlessLives > 0 ? "You Survived! 🎉" : "Game Over 💀"
     };
+
     const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     s("resultsModeTitle", titles[currentMode] || "Quiz Complete!");
     s("pointsEarned",    `+${pts}`);
     s("correctAnswers",  correct);
     s("totalQuestions",  total);
     s("timeTaken",       formatTime(timeTaken));
+
     resetFeedbackUI();
 }
 
@@ -467,6 +481,8 @@ function updateCharCount(el) {
 
 function resetFeedbackUI() {
     selectedRating = 0;
+    const ids = { feedbackPrompt:"open", fbFormWrap:null, fbSuccess:null };
+
     document.getElementById("feedbackPrompt")?.classList.remove("open");
     const fw = document.getElementById("fbFormWrap");
     const fs = document.getElementById("fbSuccess");
@@ -480,12 +496,13 @@ function resetFeedbackUI() {
     const sel = document.getElementById("feedbackType");
     const inp = document.getElementById("feedbackRating");
 
-    if (ta)  ta.value = "";
+    if (ta)  ta.value      = "";
     if (cnt) { cnt.textContent = "0 / 500"; cnt.className = "fb-char-count"; }
     if (err) err.classList.remove("show");
     if (btn) { btn.textContent = "Send Feedback"; btn.disabled = false; }
     if (sel) sel.value = "general";
     if (inp) inp.value = "";
+
     document.querySelectorAll(".star").forEach(s => s.classList.remove("active","hovered"));
 }
 
@@ -511,6 +528,7 @@ async function submitFeedback() {
             })
         });
         const result = await res.json();
+
         if (result.success) {
             document.getElementById("fbFormWrap").style.display = "none";
             document.getElementById("fbSuccess").style.display  = "flex";

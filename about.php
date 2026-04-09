@@ -2,124 +2,40 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>8BitBrain</title>
-
+    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>8BitBrain - About</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="imgs/Sans_Favi.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bitcount+Single:wght@100..900&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Bitcount+Single:wght@100..900&display=swap" rel="stylesheet" />
   </head>
-
   <body>
     <div class="bg"></div>
-
     <header class="header">
-      <a href="index.php" class="logo">
-        8BitBrain
-        <img src="imgs/Sans_Favi.png" alt="logo" class="logoimg" />
-      </a>
+      <a href="index.php" class="logo">8BitBrain<img src="imgs/Sans_Favi.png" alt="logo" class="logoimg" /></a>
       <?php include("navbar.php"); ?>
     </header>
-
     <main>
-      <!-- ORIGINAL CONTENT - KEPT AS IS -->
       <section class="about-section">
         <h1>About 8BitBrain</h1>
-        <p>
-            8BitBrain is a cutting-edge technology company dedicated to
-          revolutionizing the digital landscape through innovative solutions and
-          creative designs. Our mission is to empower businesses and individuals
-          by providing top-notch services in web development, software
-          engineering, and digital marketing.
-        </p>
+        <p>8BitBrain is a cutting-edge technology company dedicated to revolutionizing the digital landscape through innovative solutions and creative designs. Our mission is to empower businesses and individuals by providing top-notch services in web development, software engineering, and digital marketing.</p>
         <br />
-        <p>
-          Founded in 2026, 8BitBrain has quickly established itself as a leader
-          in the tech industry, known for our commitment to excellence and
-          customer satisfaction. Our team of skilled professionals works
-          tirelessly to deliver projects that exceed expectations and drive
-          success.
-        </p>
+        <p>Founded in 2026, 8BitBrain has quickly established itself as a leader in the tech industry, known for our commitment to excellence and customer satisfaction.</p>
         <br />
-        <p>
-          At 8BitBrain, we believe in the power of technology to transform lives
-          and create opportunities. We are passionate about staying ahead of
-          industry trends and continuously improving our skills to offer the
-          best possible solutions to our clients.
-        </p>
-        <br />
-        <p style="font-size: xx-large; font-weight: bolder">
-          Join us on our journey to innovate and inspire. Together, we can build
-          a brighter digital future!
-        </p>
+        <p style="font-size:xx-large;font-weight:bolder">Join us on our journey to innovate and inspire. Together, we can build a brighter digital future!</p>
       </section>
-
-      <!-- Stats Section -->
       <section class="stats-section">
-        <div class="stat-card">
-          <div class="stat-number" data-target="10000">0</div>
-          <div class="stat-label">Active Players</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number" data-target="50000">0</div>
-          <div class="stat-label">Quizzes Completed</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number" data-target="500">0</div>
-          <div class="stat-label">Questions Available</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number" data-target="5">0</div>
-          <div class="stat-label">Game Modes</div>
-        </div>
+        <div class="stat-card"><div class="stat-number" data-target="10000">0</div><div class="stat-label">Active Players</div></div>
+        <div class="stat-card"><div class="stat-number" data-target="50000">0</div><div class="stat-label">Quizzes Completed</div></div>
+        <div class="stat-card"><div class="stat-number" data-target="500">0</div><div class="stat-label">Questions Available</div></div>
+        <div class="stat-card"><div class="stat-number" data-target="5">0</div><div class="stat-label">Game Modes</div></div>
       </section>
-
-      <!-- Team Preview -->
-      <section class="team-preview">
-        <h2>Meet The Team</h2>
-        <p class="team-intro">The brilliant minds behind 8BitBrain</p>
-        <div class="team-grid">
-          <div class="team-card">
-            <img src="imgs/placeholder.jpg" alt="Team Member" />
-            <h3>Hanz Christian</h3>
-            <p>Front-end Developer</p>
-          </div>
-          <div class="team-card">
-            <img src="imgs/placeholder.jpg" alt="Team Member" />
-            <h3>Karl Lawrence</h3>
-            <p>Back-end Developer</p>
-          </div>
-          <div class="team-card">
-            <img src="imgs/placeholder.jpg" alt="Team Member" />
-            <h3>Luis Magluyan</h3>
-            <p>UI/UX Designer</p>
-          </div>
-          <div class="team-card">
-            <img src="imgs/placeholder.jpg" alt="Team Member" />
-            <h3>Lance Jasper</h3>
-            <p>QA Engineer</p>
-          </div>
-          <div class="team-card">
-            <img src="imgs/placeholder.jpg" alt="Team Member" />
-            <h3>Angela Nichole</h3>
-            <p>Database Admin</p>
-          </div>
-        </div>
-        <a href="contacts.html" class="btn-team">View Full Team</a>
-      </section>
-
-      <!-- Call to Action -->
       <section class="cta-section">
         <h2>Ready to Test Your Knowledge?</h2>
         <p>Join thousands of players in the ultimate quiz experience</p>
         <div class="cta-buttons">
-          <a href="modes.html"><button class="btn">Start Playing</button></a>
+          <a href="modes.php"><button class="btn">Start Playing</button></a>
           <a href="signup.html"><button class="btn btn-secondary">Create Account</button></a>
         </div>
       </section>

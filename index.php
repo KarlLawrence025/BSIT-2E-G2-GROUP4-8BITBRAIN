@@ -5,38 +5,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>8BitBrain</title>
-
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="imgs/Sans_Favi.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bitcount+Single:wght@100..900&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Bitcount+Single:wght@100..900&display=swap" rel="stylesheet" />
   </head>
-
   <body>
     <div class="bg"></div>
-
     <header class="header">
-      <a href="index.php" class="logo">
-        8BitBrain
-        <img src="imgs/Sans_Favi.png" alt="logo" class="logoimg" />
-      </a>
+      <a href="index.php" class="logo">8BitBrain<img src="imgs/Sans_Favi.png" alt="logo" class="logoimg" /></a>
       <?php include("navbar.php"); ?>
     </header>
-
     <main>
       <section class="hero">
         <div class="herostart">
           <h1>8BitBrain</h1>
           <p>a Quiz Website designed for fun and learning</p>
-          <button>Start Quiz!</button>
+          <button onclick="window.location.href='modes.php'">Start Quiz!</button>
         </div>
         <div class="carousel">
           <div class="group">
-            <div class="card">Let’s go!</div>
+            <div class="card">Let's go!</div>
             <div class="card">Know Thyself</div>
             <div class="card">Lock IN!</div>
             <div class="card">You're next</div>
@@ -44,7 +34,7 @@
             <div class="card">Keep Going!</div>
           </div>
           <div aria-hidden class="group">
-            <div class="card">Let’s go!</div>
+            <div class="card">Let's go!</div>
             <div class="card">Know Thyself</div>
             <div class="card">Lock IN!</div>
             <div class="card">You're next</div>
@@ -54,7 +44,6 @@
         </div>
       </section>
     </main>
-
     <script src="script.js"></script>
   </body>
 </html>
