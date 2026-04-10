@@ -1,12 +1,9 @@
-create database 8bitbrain_db;
-use  8bitbrain_db;
-
 -- phpMyAdmin SQL Dump
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 03, 2026 at 05:18 PM
+-- Generation Time: Apr 10, 2026 at 07:01 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -541,7 +538,39 @@ INSERT INTO `answers` (`id`, `question_id`, `answer_text`, `is_correct`) VALUES
 (497, 125, 'SQL', 0),
 (498, 125, 'Java', 0),
 (499, 125, 'CSS', 1),
-(500, 125, 'PHP', 0);
+(500, 125, 'PHP', 0),
+(501, 126, 'Emilio Aguinaldo', 1),
+(502, 126, 'Manuel Quezon', 0),
+(503, 126, 'Jose Rizal', 0),
+(504, 126, 'Andres Bonifacio', 0),
+(505, 127, '1898', 0),
+(506, 127, '1946', 1),
+(507, 127, '1935', 0),
+(508, 127, '1972', 0),
+(509, 128, 'Jose Rizal', 1),
+(510, 128, 'Andres Bonifacio', 0),
+(511, 128, 'Apolinario Mabini', 0),
+(512, 128, 'Lapu-Lapu', 0),
+(513, 129, 'Spain', 1),
+(514, 129, 'United States', 0),
+(515, 129, 'Japan', 0),
+(516, 129, 'Portugal', 0),
+(517, 130, 'HyperText Markup Language', 1),
+(518, 130, 'High Transfer Markup Language', 0),
+(519, 130, 'HyperText Machine Language', 0),
+(520, 130, 'Home Tool Markup Language', 0),
+(521, 131, '//', 0),
+(522, 131, '#', 1),
+(523, 131, '--', 0),
+(524, 131, '**', 0),
+(525, 132, 'A fixed constant value', 0),
+(526, 132, 'A container that stores data', 1),
+(527, 132, 'A type of loop', 0),
+(528, 132, 'A function', 0),
+(529, 133, 'Stops the program', 0),
+(530, 133, 'Runs code once', 0),
+(531, 133, 'Repeats code multiple times', 1),
+(532, 133, 'Defines a variable', 0);
 
 -- --------------------------------------------------------
 
@@ -560,6 +589,13 @@ CREATE TABLE `feedback` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `feedback`
+--
+
+INSERT INTO `feedback` (`id`, `user_id`, `quiz_id`, `feedback_text`, `feedback_type`, `rating`, `status`, `created_at`) VALUES
+(1, 2, 3, 'why not?', 'suggestion', 4, 'resolved', '2026-04-03 15:41:36');
+
 -- --------------------------------------------------------
 
 --
@@ -577,6 +613,14 @@ CREATE TABLE `leaderboard` (
   `attempts` int(11) NOT NULL DEFAULT 0,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `leaderboard`
+--
+
+INSERT INTO `leaderboard` (`id`, `user_id`, `username`, `fullname`, `total_points`, `total_correct`, `total_questions`, `attempts`, `updated_at`) VALUES
+(1, 2, 'Luis Garcia', 'Luis Garcia', 399, 18, 24, 5, '2026-04-05 06:25:33'),
+(3, 5, 'LuisMagluyan', 'LuisMagluyan', 30, 0, 5, 1, '2026-04-07 12:17:26');
 
 -- --------------------------------------------------------
 
@@ -719,7 +763,15 @@ INSERT INTO `questions` (`id`, `quiz_id`, `question_text`) VALUES
 (122, 25, 'Which is used for styling web pages?'),
 (123, 25, 'Which tag is used for a hyperlink?'),
 (124, 25, 'What does JavaScript do?'),
-(125, 25, 'Which is a frontend language?');
+(125, 25, 'Which is a frontend language?'),
+(126, 26, 'Who was the first President of the Philippines?'),
+(127, 26, 'When did the Philippines gain independence from the US?'),
+(128, 26, 'Who is the national hero of the Philippines?'),
+(129, 26, 'Which country colonized the Philippines for 333 years?'),
+(130, 27, 'What does HTML stand for?'),
+(131, 27, 'Which symbol is used for single-line comments in Python?'),
+(132, 27, 'What is a variable?'),
+(133, 27, 'What does a loop do?');
 
 -- --------------------------------------------------------
 
@@ -765,7 +817,9 @@ INSERT INTO `quizzes` (`id`, `title`, `category`, `difficulty`, `mode`, `created
 (22, 'Web Development Basics', 'Web Development', 'hard', 'endless_quiz', '2026-04-03 15:14:02'),
 (23, 'Web Development Basics', 'Web Development', 'hard', 'memory_match', '2026-04-03 15:14:08'),
 (24, 'Web Development Basics', 'Web Development', 'medium', 'ranked_quiz', '2026-04-03 15:14:20'),
-(25, 'Web Development Basics', 'Web Development', 'medium', 'timed_quiz', '2026-04-03 15:14:26');
+(25, 'Web Development Basics', 'Web Development', 'medium', 'timed_quiz', '2026-04-03 15:14:26'),
+(26, 'Philippine History', 'History', 'easy', 'single_player', '2026-04-05 06:24:48'),
+(27, 'Programming Basics', 'Computer Science', 'medium', 'timed_quiz', '2026-04-05 06:24:48');
 
 -- --------------------------------------------------------
 
@@ -785,6 +839,18 @@ CREATE TABLE `quiz_attempts` (
   `points_earned` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `quiz_attempts`
+--
+
+INSERT INTO `quiz_attempts` (`id`, `user_id`, `quiz_id`, `mode`, `difficulty`, `correct`, `total`, `time_taken`, `points_earned`, `created_at`) VALUES
+(1, 2, 3, 'memory_match', 'easy', 5, 5, 101, 113, '2026-04-03 15:35:45'),
+(2, 2, 3, 'memory_match', 'easy', 5, 5, 133, 113, '2026-04-03 15:41:21'),
+(5, 2, 3, 'memory_match', 'easy', 5, 5, 53, 113, '2026-04-03 21:39:33'),
+(7, 2, 24, 'ranked_quiz', 'medium', 0, 5, 10, 30, '2026-04-04 12:15:22'),
+(8, 2, 26, 'single_player', 'easy', 3, 4, 18, 30, '2026-04-05 06:25:33'),
+(9, 5, 13, 'timed_quiz', 'medium', 0, 5, 6, 30, '2026-04-07 12:17:26');
 
 -- --------------------------------------------------------
 
@@ -845,6 +911,7 @@ CREATE TABLE `users` (
   `email` varchar(100) NOT NULL,
   `username` varchar(50) NOT NULL,
   `age` int(11) NOT NULL,
+  `avatar` varchar(255) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `account_type` enum('user','admin') NOT NULL DEFAULT 'user',
   `status` enum('active','inactive') NOT NULL DEFAULT 'active',
@@ -855,8 +922,10 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `fullname`, `email`, `username`, `age`, `password`, `account_type`, `status`, `created_at`) VALUES
-(1, 'Admin', 'admin@8bitbrain.com', 'admin', 25, 'admin123', 'admin', 'active', '2026-03-13 04:51:10');
+INSERT INTO `users` (`id`, `fullname`, `email`, `username`, `age`, `avatar`, `password`, `account_type`, `status`, `created_at`) VALUES
+(1, 'Admin', 'admin@8bitbrain.com', 'admin', 25, NULL, 'admin123', 'admin', 'active', '2026-03-13 04:51:10'),
+(2, 'Luis Garcia', 'lg5330359@gmail.com', 'Luis Garcia', 23, 'uploads/avatars/avatar_2_1775485440.png', 'luis123', 'user', 'active', '2026-04-03 15:33:41'),
+(5, 'LuisMagluyan', 'luismagluyan@gmail.com', 'LuisMagluyan', 18, NULL, 'luis123', 'user', 'active', '2026-04-06 02:33:45');
 
 --
 -- Indexes for dumped tables
@@ -929,37 +998,37 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `answers`
 --
 ALTER TABLE `answers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=501;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=533;
 
 --
 -- AUTO_INCREMENT for table `feedback`
 --
 ALTER TABLE `feedback`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `leaderboard`
 --
 ALTER TABLE `leaderboard`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `questions`
 --
 ALTER TABLE `questions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=126;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=134;
 
 --
 -- AUTO_INCREMENT for table `quizzes`
 --
 ALTER TABLE `quizzes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `quiz_attempts`
 --
 ALTER TABLE `quiz_attempts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `quiz_references`
@@ -971,7 +1040,7 @@ ALTER TABLE `quiz_references`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Constraints for dumped tables
