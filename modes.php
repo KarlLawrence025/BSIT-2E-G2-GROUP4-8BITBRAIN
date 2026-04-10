@@ -104,7 +104,107 @@
         letter-spacing: .5px;
       }
 
-      /* ── Quiz selection overlay ── */
+      /* ── Endless card special START button ── */
+      .endless-start-btn {
+        display: inline-block;
+        margin-top: 14px;
+        padding: 10px 28px;
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        font-size: 15px;
+        font-weight: 800;
+        font-family: inherit;
+        cursor: pointer;
+        transition: transform .2s, box-shadow .2s;
+        box-shadow: 0 4px 18px rgba(139,92,246,.45);
+        letter-spacing: .5px;
+      }
+
+      .endless-start-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 28px rgba(139,92,246,.65);
+      }
+
+      .endless-start-btn:active { transform: translateY(-1px); }
+
+      /* ── Login prompt overlay for endless ── */
+      .login-prompt-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 400;
+        background: rgba(0,0,0,.82);
+        backdrop-filter: blur(8px);
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .login-prompt-overlay.open { display: flex; }
+
+      .login-prompt-modal {
+        background: linear-gradient(135deg, rgba(14,6,34,.98), rgba(8,3,20,.98));
+        border: 2px solid rgba(139,92,246,.5);
+        border-radius: 20px;
+        padding: 40px 36px;
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+        box-shadow: 0 24px 80px rgba(0,0,0,.7), 0 0 50px rgba(139,92,246,.15);
+        animation: popIn .3s cubic-bezier(.22,1,.36,1);
+      }
+
+      @keyframes popIn {
+        from { opacity:0; transform:scale(.94) translateY(20px); }
+        to   { opacity:1; transform:scale(1) translateY(0); }
+      }
+
+      .lp-icon  { font-size:52px; margin-bottom:14px; }
+      .lp-title { font-size:22px; font-weight:800; color:#fff; margin-bottom:8px; text-shadow:#f70606 2px 2px; }
+      .lp-sub   { font-size:14px; color:rgba(255,255,255,.5); margin-bottom:28px; line-height:1.6; }
+
+      .lp-actions { display:flex; gap:12px; justify-content:center; }
+
+      .lp-btn-login {
+        position: relative;
+        padding: 13px 28px;
+        font-size: 15px;
+        font-weight: 700;
+        font-family: inherit;
+        color: #fff;
+        background: #120b24;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        overflow: visible;
+        transition: background .3s;
+      }
+
+      @property --lpfill { syntax:'<percentage>'; inherits:true; initial-value:0%; }
+
+      .lp-btn-login::after {
+        content:''; position:absolute; inset:-2px; border-radius:inherit; z-index:-1;
+        background: conic-gradient(from 0deg,#8b5cf6,#ff2fb3,#38bdf8,#8b5cf6 var(--lpfill),transparent var(--lpfill));
+        transition: --lpfill .5s ease;
+      }
+      .lp-btn-login:hover { background:#1a1033; --lpfill:100%; }
+
+      .lp-btn-cancel {
+        padding: 13px 22px;
+        font-size: 14px;
+        font-family: inherit;
+        color: rgba(255,255,255,.5);
+        background: transparent;
+        border: 1.5px solid rgba(255,255,255,.15);
+        border-radius: 50px;
+        cursor: pointer;
+        transition: color .2s, border-color .2s;
+      }
+      .lp-btn-cancel:hover { color:#fff; border-color:rgba(255,255,255,.35); }
+
+      /* ── Quiz selection overlay (for non-endless modes) ── */
       .quiz-overlay {
         display: none;
         position: fixed;
@@ -133,10 +233,9 @@
 
       @keyframes panelSlide {
         from { opacity:0; transform:translateY(28px) scale(.97); }
-        to   { opacity:1; transform:translateY(0)    scale(1);   }
+        to   { opacity:1; transform:translateY(0) scale(1); }
       }
 
-      /* Panel header */
       .panel-header {
         display: flex;
         justify-content: space-between;
@@ -144,45 +243,26 @@
         margin-bottom: 6px;
       }
 
-      .panel-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #fff;
-      }
-
-      .panel-title span { color: #ff2fb3; }
-
-      .panel-sub {
-        font-size: 13px;
-        color: rgba(255,255,255,.4);
-        margin-bottom: 24px;
-      }
+      .panel-title { font-size:20px; font-weight:700; color:#fff; }
+      .panel-title span { color:#ff2fb3; }
+      .panel-sub { font-size:13px; color:rgba(255,255,255,.4); margin-bottom:24px; }
 
       .btn-panel-close {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        border: 1px solid rgba(255,255,255,.18);
-        background: rgba(255,255,255,.06);
-        color: #fff;
-        font-size: 18px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background .2s, border-color .2s;
-        flex-shrink: 0;
+        width:36px; height:36px; border-radius:50%;
+        border:1px solid rgba(255,255,255,.18);
+        background:rgba(255,255,255,.06);
+        color:#fff; font-size:18px; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        transition:background .2s, border-color .2s; flex-shrink:0;
       }
-      .btn-panel-close:hover { background: rgba(255,47,179,.25); border-color: #ff2fb3; }
+      .btn-panel-close:hover { background:rgba(255,47,179,.25); border-color:#ff2fb3; }
 
-      /* Quiz list grid */
       .quiz-list {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 14px;
       }
 
-      /* Individual quiz card */
       .quiz-pick-card {
         background: rgba(255,255,255,.04);
         border: 1.5px solid rgba(255,255,255,.1);
@@ -204,66 +284,25 @@
 
       .quiz-pick-card:active { transform: translateY(-1px); }
 
-      .qpc-title {
-        font-size: 15px;
-        font-weight: 700;
-        color: #fff;
-        line-height: 1.35;
-      }
+      .qpc-title  { font-size:15px; font-weight:700; color:#fff; line-height:1.35; }
+      .qpc-meta   { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+      .qpc-category { font-size:12px; color:#ff2fb3; font-weight:600; }
+      .qpc-diff   { font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; color:#000; }
+      .qpc-diff.easy   { background:#4ade80; }
+      .qpc-diff.medium { background:#fbbf24; }
+      .qpc-diff.hard   { background:#f87171; }
+      .qpc-count  { font-size:12px; color:rgba(255,255,255,.4); }
+      .qpc-arrow  { margin-top:4px; text-align:right; font-size:16px; color:rgba(255,47,179,.45); transition:transform .2s, color .2s; }
+      .quiz-pick-card:hover .qpc-arrow { transform:translateX(5px); color:#ff2fb3; }
 
-      .qpc-meta {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
+      .panel-state { grid-column:1 / -1; text-align:center; padding:56px 20px; color:rgba(255,255,255,.45); }
+      .panel-state-icon { font-size:40px; margin-bottom:12px; }
+      .panel-state p { font-size:15px; line-height:1.6; }
 
-      .qpc-category {
-        font-size: 12px;
-        color: #ff2fb3;
-        font-weight: 600;
-      }
-
-      .qpc-diff {
-        font-size: 11px;
-        font-weight: 700;
-        padding: 2px 8px;
-        border-radius: 6px;
-        color: #000;
-      }
-      .qpc-diff.easy   { background: #4ade80; }
-      .qpc-diff.medium { background: #fbbf24; }
-      .qpc-diff.hard   { background: #f87171; }
-
-      .qpc-count {
-        font-size: 12px;
-        color: rgba(255,255,255,.4);
-      }
-
-      .qpc-arrow {
-        margin-top: 4px;
-        text-align: right;
-        font-size: 16px;
-        color: rgba(255,47,179,.45);
-        transition: transform .2s, color .2s;
-      }
-      .quiz-pick-card:hover .qpc-arrow { transform: translateX(5px); color: #ff2fb3; }
-
-      /* Panel states */
-      .panel-state {
-        grid-column: 1 / -1;
-        text-align: center;
-        padding: 56px 20px;
-        color: rgba(255,255,255,.45);
-      }
-      .panel-state-icon { font-size: 40px; margin-bottom: 12px; }
-      .panel-state p    { font-size: 15px; line-height: 1.6; }
-
-      /* ── Responsive ── */
       @media (max-width: 680px) {
-        .modes-grid { grid-template-columns: 1fr; }
-        .quiz-panel { padding: 22px 16px; }
-        .quiz-list  { grid-template-columns: 1fr; }
+        .modes-grid { grid-template-columns:1fr; }
+        .quiz-panel { padding:22px 16px; }
+        .quiz-list  { grid-template-columns:1fr; }
       }
     </style>
   </head>
@@ -280,10 +319,11 @@
     <main>
       <div class="modes-page">
         <h1>Choose a Game Mode</h1>
-        <p class="modes-subtitle">Pick a mode, select a quiz, then start playing!</p>
+        <p class="modes-subtitle">Pick a mode and start playing!</p>
 
         <div class="modes-grid">
 
+          <!-- Single Player -->
           <div class="mode-card" data-mode="single_player" onclick="openPanel('single_player')">
             <span class="mode-icon">🎮</span>
             <div class="mode-name">Single Player</div>
@@ -291,6 +331,7 @@
             <span class="mode-badge">Classic</span>
           </div>
 
+          <!-- Timed Quiz -->
           <div class="mode-card" data-mode="timed_quiz" onclick="openPanel('timed_quiz')">
             <span class="mode-icon">⏱️</span>
             <div class="mode-name">Timed Quiz</div>
@@ -298,6 +339,7 @@
             <span class="mode-badge">60 sec</span>
           </div>
 
+          <!-- Ranked Quiz -->
           <div class="mode-card" data-mode="ranked_quiz" onclick="openPanel('ranked_quiz')">
             <span class="mode-icon">⚔️</span>
             <div class="mode-name">Ranked Quiz</div>
@@ -305,6 +347,7 @@
             <span class="mode-badge">Competitive</span>
           </div>
 
+          <!-- Memory Match -->
           <div class="mode-card" data-mode="memory_match" onclick="openPanel('memory_match')">
             <span class="mode-icon">🧠</span>
             <div class="mode-name">Memory Match</div>
@@ -312,34 +355,49 @@
             <span class="mode-badge">3 min</span>
           </div>
 
-          <div class="mode-card" data-mode="endless_quiz" onclick="openPanel('endless_quiz')">
+          <!-- Endless Quiz — NO panel, direct launch -->
+          <div class="mode-card" data-mode="endless_quiz" onclick="launchEndless()">
             <span class="mode-icon">♾️</span>
             <div class="mode-name">Endless Quiz</div>
-            <div class="mode-desc">Answer until you run out of 3 lives. How far can your streak reach?</div>
+            <div class="mode-desc">Answer questions from the entire question bank until you run out of 3 lives. How far can your streak reach?</div>
             <span class="mode-badge">3 lives</span>
+            <br>
+            <button class="endless-start-btn" onclick="event.stopPropagation(); launchEndless();">
+              ♾️ Start Endless
+            </button>
           </div>
 
         </div>
       </div>
     </main>
 
-    <!-- ── Quiz Selection Overlay ── -->
+    <!-- Quiz Selection Overlay (for non-endless modes only) -->
     <div class="quiz-overlay" id="quizOverlay">
       <div class="quiz-panel" id="quizPanel">
-
         <div class="panel-header">
           <div class="panel-title">Select a Quiz — <span id="panelModeName">Mode</span></div>
           <button class="btn-panel-close" onclick="closePanel()" title="Close">✕</button>
         </div>
         <div class="panel-sub" id="panelSub">Loading quizzes...</div>
-
         <div class="quiz-list" id="quizList">
           <div class="panel-state">
             <div class="panel-state-icon">⏳</div>
             <p>Loading...</p>
           </div>
         </div>
+      </div>
+    </div>
 
+    <!-- Login prompt for guests trying Endless -->
+    <div class="login-prompt-overlay" id="loginPromptOverlay">
+      <div class="login-prompt-modal">
+        <div class="lp-icon">🔐</div>
+        <div class="lp-title">Login Required</div>
+        <div class="lp-sub">You need to be logged in to play Endless Quiz and save your score to the leaderboard.</div>
+        <div class="lp-actions">
+          <button class="lp-btn-login" onclick="window.location.href='login.html'">Login / Sign Up</button>
+          <button class="lp-btn-cancel" onclick="closeLoginPrompt()">Cancel</button>
+        </div>
       </div>
     </div>
 
@@ -352,17 +410,32 @@
         endless_quiz:  'Endless Quiz'
       };
 
-      let activeMode = null;
+      // ── Endless Quiz — direct launch ───────────────────────────────────────
+      function launchEndless() {
+        <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
+          // Logged in — go straight to endless.php
+          localStorage.setItem('selectedMode', 'endless_quiz');
+          window.location.href = 'endless.php';
+        <?php else: ?>
+          // Guest — show login prompt
+          document.getElementById('loginPromptOverlay').classList.add('open');
+          document.body.style.overflow = 'hidden';
+        <?php endif; ?>
+      }
 
-      /* ── Open panel ── */
+      function closeLoginPrompt() {
+        document.getElementById('loginPromptOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      // ── Quiz panel (for non-endless modes) ────────────────────────────────
+      var activeMode = null;
+
       async function openPanel(mode) {
         activeMode = mode;
-
-        // Clear any stale quiz selection from a previous session
         localStorage.removeItem('selectedQuizId');
         localStorage.setItem('selectedMode', mode);
 
-        // Update header
         document.getElementById('panelModeName').textContent = MODE_LABELS[mode] || mode;
         document.getElementById('panelSub').textContent      = 'Loading quizzes...';
         document.getElementById('quizList').innerHTML = `
@@ -371,27 +444,20 @@
             <p>Loading <strong>${MODE_LABELS[mode]}</strong> quizzes...</p>
           </div>`;
 
-        // Show overlay
         document.getElementById('quizOverlay').classList.add('open');
         document.body.style.overflow = 'hidden';
 
-        // Fetch quizzes for this mode
         try {
           const res  = await fetch('api/get_quizzes.php?mode=' + encodeURIComponent(mode));
           const data = await res.json();
 
-          if (!data.success) {
-            showPanelError('Could not load quizzes. Is XAMPP running?');
-            return;
-          }
-
+          if (!data.success) { showPanelError('Could not load quizzes. Is XAMPP running?'); return; }
           renderQuizList(data.data, mode);
         } catch (e) {
           showPanelError('Network error. Make sure XAMPP Apache is running.');
         }
       }
 
-      /* ── Render quiz cards ── */
       function renderQuizList(quizzes, mode) {
         const list = document.getElementById('quizList');
         const sub  = document.getElementById('panelSub');
@@ -424,37 +490,37 @@
         }).join('');
       }
 
-      /* ── Launch quiz ── */
       function launchQuiz(quizId, mode) {
-        // Store BOTH values before navigating
         localStorage.setItem('selectedMode',   mode);
         localStorage.setItem('selectedQuizId', quizId);
         window.location.href = 'quiz.php';
       }
 
-      /* ── Close panel ── */
       function closePanel() {
         document.getElementById('quizOverlay').classList.remove('open');
         document.body.style.overflow = '';
         activeMode = null;
-        // Clear any leftover quiz id so quiz.php can't accidentally start one
         localStorage.removeItem('selectedQuizId');
       }
 
-      /* ── Click outside panel to close ── */
+      // Close panel on backdrop click
       document.getElementById('quizOverlay').addEventListener('click', function(e) {
         if (e.target === this) closePanel();
       });
 
-      /* ── ESC key ── */
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closePanel();
+      // Close login prompt on backdrop click
+      document.getElementById('loginPromptOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeLoginPrompt();
       });
 
-      /* ── Helpers ── */
+      // ESC key
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { closePanel(); closeLoginPrompt(); }
+      });
+
       function showPanelError(msg) {
         document.getElementById('panelSub').textContent = '';
-        document.getElementById('quizList').innerHTML   = `
+        document.getElementById('quizList').innerHTML = `
           <div class="panel-state">
             <div class="panel-state-icon">⚠️</div>
             <p>${msg}</p>

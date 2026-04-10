@@ -25,12 +25,26 @@
         <br />
         <p style="font-size:xx-large;font-weight:bolder">Join us on our journey to innovate and inspire. Together, we can build a brighter digital future!</p>
       </section>
+
       <section class="stats-section">
-        <div class="stat-card"><div class="stat-number" data-target="10000">0</div><div class="stat-label">Active Players</div></div>
-        <div class="stat-card"><div class="stat-number" data-target="50000">0</div><div class="stat-label">Quizzes Completed</div></div>
-        <div class="stat-card"><div class="stat-number" data-target="500">0</div><div class="stat-label">Questions Available</div></div>
-        <div class="stat-card"><div class="stat-number" data-target="5">0</div><div class="stat-label">Game Modes</div></div>
+        <div class="stat-card">
+          <div class="stat-number" id="stat-players">—</div>
+          <div class="stat-label">Active Players</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="stat-attempts">—</div>
+          <div class="stat-label">Quizzes Completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="stat-questions">—</div>
+          <div class="stat-label">Questions Available</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="stat-modes">5</div>
+          <div class="stat-label">Game Modes</div>
+        </div>
       </section>
+
       <section class="cta-section">
         <h2>Ready to Test Your Knowledge?</h2>
         <p>Join thousands of players in the ultimate quiz experience</p>
@@ -40,6 +54,45 @@
         </div>
       </section>
     </main>
+
     <script src="script.js"></script>
+    <script>
+      // Load real stats from DB, then animate counters
+      fetch('api/get_about_stats.php')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data.success) return;
+
+          animateCounter(document.getElementById('stat-players'),   data.active_players);
+          animateCounter(document.getElementById('stat-attempts'),  data.quizzes_completed);
+          animateCounter(document.getElementById('stat-questions'), data.questions_available);
+          animateCounter(document.getElementById('stat-modes'),     data.game_modes);
+        })
+        .catch(function() {
+          // Fallback: just show 0s if DB unreachable
+          ['stat-players','stat-attempts','stat-questions','stat-modes'].forEach(function(id) {
+            document.getElementById(id).textContent = '0';
+          });
+        });
+
+      function animateCounter(element, target) {
+        var start    = 0;
+        var duration = 1800;
+        var step     = 16;
+        var steps    = duration / step;
+        var increment = target / steps;
+        var current  = 0;
+
+        var timer = setInterval(function() {
+          current += increment;
+          if (current >= target) {
+            element.textContent = Number(target).toLocaleString();
+            clearInterval(timer);
+          } else {
+            element.textContent = Math.floor(current).toLocaleString();
+          }
+        }, step);
+      }
+    </script>
   </body>
 </html>

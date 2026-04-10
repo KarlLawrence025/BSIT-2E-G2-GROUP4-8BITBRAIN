@@ -1,50 +1,438 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>8BitBrain - Sign Up</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="imgs/Sans_Favi.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Bitcount+Single:wght@100..900&display=swap" rel="stylesheet" />
+    <style>
+      .admin-verify-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 500;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(8px);
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .admin-verify-overlay.open { display: flex; }
+
+      .admin-verify-modal {
+        background: linear-gradient(135deg, rgba(14,6,34,.98), rgba(8,3,20,.98));
+        border: 2px solid rgba(255,47,179,.5);
+        border-radius: 20px;
+        padding: 40px 36px;
+        width: 100%;
+        max-width: 460px;
+        box-shadow: 0 0 0 1px rgba(255,255,255,.04), 0 24px 80px rgba(0,0,0,.7), 0 0 60px rgba(255,47,179,.15);
+        animation: modalSlide .3s cubic-bezier(.22,1,.36,1);
+      }
+      @keyframes modalSlide {
+        from { opacity:0; transform:translateY(24px) scale(.97); }
+        to   { opacity:1; transform:translateY(0) scale(1); }
+      }
+
+      .modal-shield-icon { font-size:52px; text-align:center; margin-bottom:16px; filter:drop-shadow(0 0 16px rgba(255,47,179,.6)); }
+      .modal-heading     { font-size:22px; font-weight:800; color:#fff; text-align:center; margin-bottom:6px; text-shadow:#f70606 2px 2px; }
+      .modal-subheading  { font-size:13px; color:rgba(255,255,255,.5); text-align:center; margin-bottom:28px; line-height:1.6; }
+      .modal-subheading strong { color:#ff2fb3; }
+
+      .modal-form-group { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+      .modal-form-group label { font-size:12px; font-weight:700; color:rgba(255,255,255,.6); text-transform:uppercase; letter-spacing:1.2px; }
+
+      .modal-input {
+        padding:13px 16px;
+        background:rgba(255,255,255,.07);
+        border:1.5px solid rgba(255,255,255,.15);
+        border-radius:10px;
+        color:#fff;
+        font-size:15px;
+        font-family:inherit;
+        transition:border-color .2s, box-shadow .2s;
+        outline:none;
+        width:100%;
+        box-sizing:border-box;
+      }
+      .modal-input:focus { border-color:#ff2fb3; background:rgba(255,47,179,.07); box-shadow:0 0 0 3px rgba(255,47,179,.18); }
+      .modal-input::placeholder { color:rgba(255,255,255,.3); }
+      .modal-input.error { border-color:#f87171; background:rgba(248,113,113,.07); }
+
+      .modal-error-msg {
+        font-size:12px; color:#f87171; display:none;
+        margin-bottom:12px; padding:8px 12px;
+        background:rgba(248,113,113,.1); border-radius:6px; border-left:3px solid #f87171;
+      }
+      .modal-error-msg.show { display:block; }
+
+      .modal-divider { height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent); margin:20px 0; }
+
+      .modal-notice {
+        font-size:12px; color:rgba(255,255,255,.35); text-align:center;
+        margin-bottom:20px; line-height:1.6; padding:10px 14px;
+        background:rgba(255,47,179,.05); border-radius:8px; border:1px solid rgba(255,47,179,.15);
+      }
+
+      .modal-actions { display:flex; gap:12px; }
+
+      @property --vfill { syntax:'<percentage>'; inherits:true; initial-value:0%; }
+      .btn-verify {
+        position:relative; flex:1; padding:14px 20px; font-size:15px; font-weight:700;
+        font-family:inherit; color:#fff; background:#120b24; border:none; border-radius:50px;
+        cursor:pointer; transition:background .3s; overflow:visible;
+      }
+      .btn-verify::after {
+        content:''; position:absolute; inset:-2px; border-radius:inherit; z-index:-1;
+        background:conic-gradient(from 0deg,#ff2fb3,#a855f7,#38bdf8,#ff2fb3 var(--vfill),transparent var(--vfill));
+        transition:--vfill .5s ease;
+      }
+      .btn-verify:hover:not(:disabled) { background:#1a1033; --vfill:100%; }
+      .btn-verify:disabled { opacity:.55; cursor:not-allowed; }
+
+      .btn-cancel-modal {
+        padding:14px 20px; font-size:14px; font-family:inherit; color:rgba(255,255,255,.5);
+        background:transparent; border:1.5px solid rgba(255,255,255,.15); border-radius:50px;
+        cursor:pointer; transition:color .2s, border-color .2s; white-space:nowrap;
+      }
+      .btn-cancel-modal:hover { color:#fff; border-color:rgba(255,255,255,.35); }
+
+      .admin-warning-banner {
+        display:none; background:rgba(255,47,179,.08); border:1px solid rgba(255,47,179,.3);
+        border-radius:10px; padding:12px 16px; margin-bottom:18px; font-size:13px;
+        color:rgba(255,255,255,.7); line-height:1.6; text-align:center;
+      }
+      .admin-warning-banner.show { display:block; }
+      .admin-warning-banner strong { color:#ff2fb3; }
+
+      .admin-verified-badge {
+        display:none; align-items:center; gap:8px; background:rgba(74,222,128,.1);
+        border:1px solid rgba(74,222,128,.4); border-radius:8px; padding:10px 14px;
+        font-size:13px; color:#4ade80; font-weight:700; margin-bottom:18px;
+        text-align:center; justify-content:center; flex-wrap:wrap;
+      }
+      .admin-verified-badge.show { display:flex; }
+    </style>
   </head>
   <body>
     <header class="header">
       <a href="index.php" class="logo">8BitBrain<img src="imgs/Sans_Favi.png" alt="logo" class="logoimg" /></a>
       <nav class="navbar">
-        <a href="index.php">Home</a><a href="about.php">About</a>
-        <a href="modes.php">Game Modes</a><a href="contacts.php">Contact</a>
+        <a href="index.php">Home</a>
+        <a href="about.php">About</a>
+        <a href="modes.php">Game Modes</a>
+        <a href="contacts.php">Contact</a>
         <a href="leaderboards.php">Leaderboards</a>
         <a href="login.html"><button class="btn-login">Login</button></a>
       </nav>
     </header>
+
     <main>
       <section class="login-section">
         <div class="login-container signup-container">
           <h1>Create Your Account</h1>
           <p class="login-subtitle">Join the 8BitBrain community today!</p>
+
           <div class="account-type-selector">
-            <button class="account-type-btn active" data-type="user">Regular User</button>
-            <button class="account-type-btn" data-type="admin">Admin</button>
+            <button type="button" class="account-type-btn active" data-type="user">👤 Regular User</button>
+            <button type="button" class="account-type-btn" data-type="admin">🔐 Admin</button>
           </div>
+
+          <div class="admin-warning-banner" id="adminWarningBanner">
+            🔐 <strong>Admin accounts</strong> require authorization from an existing admin.<br>
+            You will be prompted to verify before the account is created.
+          </div>
+
+          <div class="admin-verified-badge" id="adminVerifiedBadge"></div>
+
+          <!-- NOTE: no name attributes, no action — handled purely by JS below -->
           <form id="signupForm" class="login-form">
-            <div class="form-group"><label for="fullname">Full Name</label><input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required /></div>
-            <div class="form-group"><label for="email">Email Address</label><input type="email" id="email" name="email" placeholder="Enter your email" required /></div>
-            <div class="form-group"><label for="username">Username</label><input type="text" id="username" name="username" placeholder="Choose a username" required minlength="3" /></div>
-            <div class="form-group"><label for="age">Age</label><input type="number" id="age" name="age" placeholder="Enter your age" min="1" max="120" required /></div>
-            <div class="form-group"><label for="password">Password</label><input type="password" id="password" name="password" placeholder="Create a password (min 6 characters)" required minlength="6" /></div>
-            <div class="form-group"><label for="confirm-password">Confirm Password</label><input type="password" id="confirm-password" name="confirm-password" placeholder="Re-enter your password" required /></div>
-            <div class="form-group checkbox-group">
-              <input type="checkbox" id="terms" name="terms" required />
-              <label for="terms">I agree to the <a href="#" class="terms-link">Terms & Conditions</a></label>
+            <div class="form-group">
+              <label for="su_fullname">Full Name</label>
+              <input type="text" id="su_fullname" placeholder="Enter your full name" required />
             </div>
-            <button type="submit" class="btn-submit">Create Account</button>
+            <div class="form-group">
+              <label for="su_email">Email Address</label>
+              <input type="email" id="su_email" placeholder="Enter your email" required />
+            </div>
+            <div class="form-group">
+              <label for="su_username">Username</label>
+              <input type="text" id="su_username" placeholder="Choose a username" required minlength="3" />
+            </div>
+            <div class="form-group">
+              <label for="su_age">Age</label>
+              <input type="number" id="su_age" placeholder="Enter your age" min="1" max="120" required />
+            </div>
+            <div class="form-group">
+              <label for="su_password">Password</label>
+              <input type="password" id="su_password" placeholder="Create a password (min 6 characters)" required minlength="6" />
+            </div>
+            <div class="form-group">
+              <label for="su_confirm">Confirm Password</label>
+              <input type="password" id="su_confirm" placeholder="Re-enter your password" required />
+            </div>
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="su_terms" required />
+              <label for="su_terms">I agree to the <a href="#" class="terms-link">Terms &amp; Conditions</a></label>
+            </div>
+            <button type="submit" class="btn-submit" id="submitBtn">Create Account</button>
           </form>
-          <div class="login-footer"><p>Already have an account? <a href="login.html" class="signup-link">Login here</a></p></div>
+
+          <div class="login-footer">
+            <p>Already have an account? <a href="login.html" class="signup-link">Login here</a></p>
+          </div>
         </div>
       </section>
     </main>
-    <script src="script.js"></script>
+
+    <!-- Admin Verification Modal -->
+    <div class="admin-verify-overlay" id="adminVerifyOverlay">
+      <div class="admin-verify-modal">
+        <div class="modal-shield-icon">🛡️</div>
+        <div class="modal-heading">Admin Authorization Required</div>
+        <div class="modal-subheading">
+          To create an <strong>Admin account</strong>, an existing admin must authorize
+          this request by providing their credentials.
+        </div>
+
+        <div class="modal-form-group">
+          <label for="authIdentifier">Authorizing Admin's Username or Email</label>
+          <input type="text" id="authIdentifier" class="modal-input"
+                 placeholder="Enter admin username or email" autocomplete="off" />
+        </div>
+        <div class="modal-form-group">
+          <label for="authAdminPwd">Authorizing Admin's Password</label>
+          <input type="password" id="authAdminPwd" class="modal-input"
+                 placeholder="Enter admin password" autocomplete="off" />
+        </div>
+
+        <div class="modal-error-msg" id="verifyErrorMsg"></div>
+        <div class="modal-divider"></div>
+        <div class="modal-notice">
+          🔒 This is a one-time verification. The admin's password is only used for
+          verification and is not stored.
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-verify" id="btnVerifyConfirm">Verify &amp; Authorize</button>
+          <button type="button" class="btn-cancel-modal" id="btnVerifyCancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    // ── IMPORTANT: this page is fully self-contained — do NOT load script.js
+    //    script.js registers its own signupForm listener which conflicts
+
+    // Nav highlight
+    document.querySelectorAll('.navbar a').forEach(link => {
+      if (link.href === window.location.href) link.classList.add('active');
+    });
+
+    // ── State ──────────────────────────────────────────────────────────────────
+    var currentAccountType = 'user';
+    var adminVerified = false;
+
+    // ── Account type toggle ────────────────────────────────────────────────────
+    document.querySelectorAll('.account-type-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.account-type-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentAccountType = btn.dataset.type;
+
+        if (currentAccountType === 'admin') {
+          document.getElementById('adminWarningBanner').classList.add('show');
+        } else {
+          document.getElementById('adminWarningBanner').classList.remove('show');
+          adminVerified = false;
+          var badge = document.getElementById('adminVerifiedBadge');
+          badge.classList.remove('show');
+          badge.innerHTML = '';
+          document.getElementById('submitBtn').textContent = 'Create Account';
+        }
+      });
+    });
+
+    // ── Form submit ────────────────────────────────────────────────────────────
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      var fullname = document.getElementById('su_fullname').value.trim();
+      var email    = document.getElementById('su_email').value.trim();
+      var username = document.getElementById('su_username').value.trim();
+      var age      = document.getElementById('su_age').value;
+      var pwd      = document.getElementById('su_password').value;
+      var confirm  = document.getElementById('su_confirm').value;
+      var terms    = document.getElementById('su_terms').checked;
+
+      if (!terms)              { alert('Please accept the Terms & Conditions'); return; }
+      if (username.length < 3) { alert('Username must be at least 3 characters'); return; }
+      if (pwd.length < 6)      { alert('Password must be at least 6 characters'); return; }
+      if (pwd !== confirm)     { alert('Passwords do not match!'); return; }
+
+      // Admin → open verification modal and STOP. Do not create account yet.
+      if (currentAccountType === 'admin' && !adminVerified) {
+        openVerifyModal();
+        return;
+      }
+
+      // Regular user or already-verified admin → create account
+      doCreateAccount(fullname, email, username, age, pwd);
+    });
+
+    // ── Create account API call ────────────────────────────────────────────────
+    function doCreateAccount(fullname, email, username, age, pwd) {
+      var btn = document.getElementById('submitBtn');
+      var orig = btn.textContent;
+      btn.textContent = '⏳ Creating Account...';
+      btn.disabled = true;
+
+      fetch('api/create_user.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullname:     fullname,
+          email:        email,
+          username:     username,
+          age:          parseInt(age),
+          password:     pwd,
+          account_type: currentAccountType
+        })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(result) {
+        if (result.success) {
+          alert('✅ Account created! Welcome, ' + fullname + '!\n\nYou can now log in.');
+          window.location.href = 'login.html';
+        } else {
+          alert('❌ Error: ' + result.message);
+          btn.textContent = orig;
+          btn.disabled = false;
+        }
+      })
+      .catch(function() {
+        alert('Network error. Is XAMPP running?');
+        btn.textContent = orig;
+        btn.disabled = false;
+      });
+    }
+
+    // ── Open modal ─────────────────────────────────────────────────────────────
+    function openVerifyModal() {
+      document.getElementById('authIdentifier').value = '';
+      document.getElementById('authAdminPwd').value   = '';
+      document.getElementById('authIdentifier').classList.remove('error');
+      document.getElementById('authAdminPwd').classList.remove('error');
+      document.getElementById('verifyErrorMsg').classList.remove('show');
+      document.getElementById('verifyErrorMsg').textContent = '';
+      document.getElementById('btnVerifyConfirm').textContent = 'Verify & Authorize';
+      document.getElementById('btnVerifyConfirm').disabled = false;
+
+      document.getElementById('adminVerifyOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      setTimeout(function() { document.getElementById('authIdentifier').focus(); }, 120);
+    }
+
+    // ── Close modal ────────────────────────────────────────────────────────────
+    function closeVerifyModal() {
+      document.getElementById('adminVerifyOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // ── Submit verification ────────────────────────────────────────────────────
+    function submitVerification() {
+      var identifier = document.getElementById('authIdentifier').value.trim();
+      var adminPwd   = document.getElementById('authAdminPwd').value;
+      var errorMsg   = document.getElementById('verifyErrorMsg');
+      var btn        = document.getElementById('btnVerifyConfirm');
+      var idInput    = document.getElementById('authIdentifier');
+      var pwInput    = document.getElementById('authAdminPwd');
+
+      errorMsg.classList.remove('show');
+      idInput.classList.remove('error');
+      pwInput.classList.remove('error');
+
+      if (!identifier) {
+        idInput.classList.add('error');
+        errorMsg.textContent = '⚠️ Please enter the authorizing admin\'s username or email.';
+        errorMsg.classList.add('show');
+        idInput.focus();
+        return;
+      }
+
+      if (!adminPwd) {
+        pwInput.classList.add('error');
+        errorMsg.textContent = '⚠️ Please enter the authorizing admin\'s password.';
+        errorMsg.classList.add('show');
+        pwInput.focus();
+        return;
+      }
+
+      btn.textContent = '⏳ Verifying...';
+      btn.disabled = true;
+
+      fetch('api/verify_admin_code.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: identifier, admin_code: adminPwd })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(result) {
+        if (result.success) {
+          adminVerified = true;
+          closeVerifyModal();
+
+          // Show badge
+          var badge = document.getElementById('adminVerifiedBadge');
+          badge.innerHTML = '✅ Authorized by <strong>' + result.authorized_by + '</strong> — creating account...';
+          badge.classList.add('show');
+          document.getElementById('adminWarningBanner').classList.remove('show');
+          document.getElementById('submitBtn').textContent = '✅ Create Admin Account';
+
+          // Read form values fresh and create the account
+          var fullname = document.getElementById('su_fullname').value.trim();
+          var email    = document.getElementById('su_email').value.trim();
+          var username = document.getElementById('su_username').value.trim();
+          var age      = document.getElementById('su_age').value;
+          var pwd      = document.getElementById('su_password').value;
+
+          // Small delay so user sees the badge, then proceed
+          setTimeout(function() {
+            doCreateAccount(fullname, email, username, age, pwd);
+          }, 800);
+
+        } else {
+          idInput.classList.add('error');
+          pwInput.classList.add('error');
+          errorMsg.textContent = '❌ ' + (result.message || 'Verification failed. Check credentials.');
+          errorMsg.classList.add('show');
+          btn.textContent = 'Verify & Authorize';
+          btn.disabled = false;
+        }
+      })
+      .catch(function() {
+        errorMsg.textContent = '❌ Network error. Is XAMPP running?';
+        errorMsg.classList.add('show');
+        btn.textContent = 'Verify & Authorize';
+        btn.disabled = false;
+      });
+    }
+
+    // Wire up modal buttons
+    document.getElementById('btnVerifyConfirm').addEventListener('click', submitVerification);
+    document.getElementById('btnVerifyCancel').addEventListener('click', closeVerifyModal);
+
+    // Keyboard shortcuts
+    document.getElementById('adminVerifyOverlay').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter')  submitVerification();
+      if (e.key === 'Escape') closeVerifyModal();
+    });
+    </script>
+    <!-- NOTE: script.js is intentionally NOT loaded here to avoid signup handler conflict -->
   </body>
 </html>

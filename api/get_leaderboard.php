@@ -8,29 +8,28 @@ $mode = isset($_GET['mode']) && $_GET['mode'] !== ''
         ? $conn->real_escape_string($_GET['mode'])
         : null;
 
-// ── ALWAYS sum directly from quiz_attempts ─────────────────────────────────
-// This guarantees correct/total is the TRUE accumulated sum across ALL attempts,
-// never a stale cached value from the leaderboard table.
-
+// Use LEFT JOIN so quiz_id=0 (endless mode) rows are still included.
+// Also join users to get avatar for the leaderboard display.
 if ($mode) {
     $where = "WHERE qa.mode = '$mode'";
 } else {
-    $where = "";   // all modes
+    $where = "";
 }
 
 $sql = "
     SELECT
-        u.id                         AS user_id,
+        u.id                              AS user_id,
         u.fullname,
         u.username,
-        SUM(qa.points_earned)        AS total_points,
-        SUM(qa.correct)              AS total_correct,
-        SUM(qa.total)                AS total_questions,
-        COUNT(qa.id)                 AS attempts
+        u.avatar,
+        SUM(qa.points_earned)             AS total_points,
+        SUM(qa.correct)                   AS total_correct,
+        SUM(qa.total)                     AS total_questions,
+        COUNT(qa.id)                      AS attempts
     FROM quiz_attempts qa
     JOIN users u ON u.id = qa.user_id
     $where
-    GROUP BY u.id, u.fullname, u.username
+    GROUP BY u.id, u.fullname, u.username, u.avatar
     ORDER BY total_points DESC
     LIMIT 50
 ";
